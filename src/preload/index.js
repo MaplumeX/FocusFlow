@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('api', {
   createFocusItem: (item) => ipcRenderer.invoke('create-focus-item', item),
   updateFocusItem: (id, item) => ipcRenderer.invoke('update-focus-item', id, item),
   deleteFocusItem: (id) => ipcRenderer.invoke('delete-focus-item', id),
+  updateFocusItemStats: (id, focusTime, sessionCount) =>
+    ipcRenderer.invoke('update-focus-item-stats', id, focusTime, sessionCount),
 
   // 设置管理(Phase 1 暂不实现)
   getSettings: () => ipcRenderer.invoke('get-settings'),

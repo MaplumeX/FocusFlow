@@ -17,6 +17,7 @@ import {
   createFocusItem,
   updateFocusItem,
   deleteFocusItem,
+  updateFocusItemStats,
   getSettings,
   updateSettings,
   getDatabasePath
@@ -92,6 +93,20 @@ export function registerIpcHandlers() {
       return { success: true }
     } catch (error) {
       console.error('Error deleting focus item:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 更新专注事项统计数据
+  ipcMain.handle('update-focus-item-stats', (event, id, focusTime, sessionCount) => {
+    try {
+      const success = updateFocusItemStats(id, focusTime, sessionCount)
+      if (!success) {
+        return { success: false, error: 'Failed to update stats' }
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating focus item stats:', error)
       return { success: false, error: error.message }
     }
   })

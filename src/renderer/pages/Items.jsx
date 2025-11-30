@@ -3,39 +3,20 @@
  *
  * 功能:
  * - 显示所有专注事项
- * - 测试数据库 CRUD 操作
+ * - 使用 useFocusStore 进行状态管理
  */
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
+import useFocusStore from '../store/useFocusStore'
 
 function Items() {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  // 从 store 获取状态和操作
+  const { items, loading, error, loadItems, deleteItem, clearError } = useFocusStore()
 
   // 加载专注事项
   useEffect(() => {
     loadItems()
-  }, [])
-
-  async function loadItems() {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const result = await window.api.getFocusItems()
-
-      if (result.success) {
-        setItems(result.data)
-      } else {
-        setError(result.error)
-      }
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [loadItems])
 
   // 删除事项
   async function handleDelete(id) {
@@ -43,21 +24,14 @@ function Items() {
       return
     }
 
-    try {
-      const result = await window.api.deleteFocusItem(id)
-
-      if (result.success) {
-        // 重新加载列表
-        loadItems()
-      } else {
-        alert('删除失败: ' + result.error)
-      }
-    } catch (err) {
-      alert('删除失败: ' + err.message)
+    const success = await deleteItem(id)
+    if (!success && error) {
+      alert('删除失败: ' + error)
+      clearError()
     }
   }
 
-  if (loading) {
+  if (loading && items.length === 0) {
     return (
       <div style={{ padding: '40px', textAlign: 'center' }}>
         <p>加载中...</p>
@@ -65,12 +39,12 @@ function Items() {
     )
   }
 
-  if (error) {
+  if (error && items.length === 0) {
     return (
       <div style={{ padding: '40px' }}>
         <h1>专注事项管理</h1>
         <p style={{ color: 'red' }}>错误: {error}</p>
-        <button onClick={loadItems}>重试</button>
+        <button onClick={() => { clearError(); loadItems(); }}>重试</button>
       </div>
     )
   }
