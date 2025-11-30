@@ -1,0 +1,169 @@
+/**
+ * Home 页面样式
+ * 居中布局 + 今日统计卡片
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* 主内容区 */
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  max-width: 800px;
+  width: 100%;
+}
+
+/* 控制按钮区 */
+.controlsWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+}
+
+/* 统计卡片 */
+.statsCard {
+  background: white;
+  border-radius: 16px;
+  padding: 24px 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 600px;
+}
+
+.statsTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.statsGrid {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: #999;
+}
+
+.statDivider {
+  width: 1px;
+  height: 50px;
+  background: #f0f0f0;
+}
+
+/* 事项选择列表 */
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyText {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  margin: 0;
+}
+
+.itemCard {
+  padding: 16px;
+  border: 2px solid #f0f0f0;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.itemCard:hover {
+  border-color: #1890ff;
+  background: #f0f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.1);
+}
+
+.itemIcon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.itemInfo {
+  flex: 1;
+}
+
+.itemName {
+  font-weight: 500;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.itemConfig {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px;
+  }
+
+  .statsCard {
+    padding: 20px 16px;
+  }
+
+  .statsGrid {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .statDivider {
+    display: none;
+  }
+
+  .statValue {
+    font-size: 20px;
+  }
+
+  .controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .controls button {
+    width: 100%;
+  }
+}
