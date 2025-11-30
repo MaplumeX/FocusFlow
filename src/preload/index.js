@@ -5,6 +5,7 @@
  * - 安全地暴露主进程 API 到渲染进程
  * - 使用 contextBridge 进行隔离
  * - 会话管理 API (Phase 2)
+ * - 统计查询 API (Phase 3)
  *
  * 安全规则(红线要求):
  * - 不暴露 Node.js API
@@ -14,6 +15,7 @@
  * @author FocusFlow Team
  * @created 2025-11-30
  * @updated 2025-11-30 (Phase 2: 添加会话管理 API)
+ * @updated 2025-11-30 (Phase 3: 添加统计查询 API)
  */
 
 import { contextBridge, ipcRenderer } from 'electron'
@@ -53,5 +55,17 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('get-session-pomodoro-records', sessionId),
 
   // 今日统计 (Phase 2)
-  getTodayStats: () => ipcRenderer.invoke('get-today-stats')
+  getTodayStats: () => ipcRenderer.invoke('get-today-stats'),
+
+  // 统计查询 (Phase 3)
+  getSessionsByDateRange: (startTime, endTime) =>
+    ipcRenderer.invoke('get-sessions-by-date-range', startTime, endTime),
+  getPomodoroRecordsByDateRange: (startTime, endTime) =>
+    ipcRenderer.invoke('get-pomodoro-records-by-date-range', startTime, endTime),
+  getSessionsByItem: (itemId, limit) =>
+    ipcRenderer.invoke('get-sessions-by-item', itemId, limit),
+  getStatsByItem: (startTime, endTime) =>
+    ipcRenderer.invoke('get-stats-by-item', startTime, endTime),
+  getDailyStats: (startTime, endTime) =>
+    ipcRenderer.invoke('get-daily-stats', startTime, endTime)
 })

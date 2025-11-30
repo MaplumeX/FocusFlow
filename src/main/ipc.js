@@ -32,7 +32,13 @@ import {
   createPomodoroRecord,
   updatePomodoroRecord,
   getSessionPomodoroRecords,
-  getTodayStats
+  getTodayStats,
+  // Phase 3: 统计查询
+  getSessionsByDateRange,
+  getPomodoroRecordsByDateRange,
+  getSessionsByItem,
+  getStatsByItem,
+  getDailyStats
 } from './database.js'
 
 /**
@@ -314,5 +320,82 @@ export function registerIpcHandlers() {
     }
   })
 
-  console.log('IPC handlers registered successfully (with Phase 2 session management)')
+  // ==================== 统计查询 (Phase 3) ====================
+
+  // 获取指定时间范围内的会话列表
+  ipcMain.handle('get-sessions-by-date-range', (event, startTime, endTime) => {
+    try {
+      if (!startTime || !endTime) {
+        return { success: false, error: 'Invalid time range' }
+      }
+
+      const sessions = getSessionsByDateRange(startTime, endTime)
+      return { success: true, data: sessions }
+    } catch (error) {
+      console.error('Error getting sessions by date range:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取指定时间范围内的番茄钟记录
+  ipcMain.handle('get-pomodoro-records-by-date-range', (event, startTime, endTime) => {
+    try {
+      if (!startTime || !endTime) {
+        return { success: false, error: 'Invalid time range' }
+      }
+
+      const records = getPomodoroRecordsByDateRange(startTime, endTime)
+      return { success: true, data: records }
+    } catch (error) {
+      console.error('Error getting pomodoro records by date range:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取指定专注事项的会话列表
+  ipcMain.handle('get-sessions-by-item', (event, itemId, limit = null) => {
+    try {
+      if (!itemId) {
+        return { success: false, error: 'Invalid item ID' }
+      }
+
+      const sessions = getSessionsByItem(itemId, limit)
+      return { success: true, data: sessions }
+    } catch (error) {
+      console.error('Error getting sessions by item:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取按事项分组的统计
+  ipcMain.handle('get-stats-by-item', (event, startTime, endTime) => {
+    try {
+      if (!startTime || !endTime) {
+        return { success: false, error: 'Invalid time range' }
+      }
+
+      const stats = getStatsByItem(startTime, endTime)
+      return { success: true, data: stats }
+    } catch (error) {
+      console.error('Error getting stats by item:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取每日统计数据
+  ipcMain.handle('get-daily-stats', (event, startTime, endTime) => {
+    try {
+      if (!startTime || !endTime) {
+        return { success: false, error: 'Invalid time range' }
+      }
+
+      const stats = getDailyStats(startTime, endTime)
+      return { success: true, data: stats }
+    } catch (error) {
+      console.error('Error getting daily stats:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  console.log('IPC handlers registered successfully (with Phase 2 session management & Phase 3 statistics)')
 }

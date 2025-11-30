@@ -547,3 +547,137 @@ export function getTodayStats() {
     }
   }
 }
+
+// ============================================
+// 统计查询操作 (Phase 3)
+// ============================================
+
+/**
+ * 获取指定时间范围内的会话列表
+ * @param {number} startTime - 开始时间戳(秒)
+ * @param {number} endTime - 结束时间戳(秒)
+ */
+export function getSessionsByDateRange(startTime, endTime) {
+  try {
+    const stmt = db.prepare(`
+      SELECT s.*, i.name as item_name, i.icon as item_icon, i.color as item_color
+      FROM focus_sessions s
+      LEFT JOIN focus_items i ON s.focus_item_id = i.id
+      WHERE s.started_at >= ? AND s.started_at < ?
+      ORDER BY s.started_at DESC
+    `)
+
+    return stmt.all(startTime, endTime)
+  } catch (error) {
+    console.error('Error getting sessions by date range:', error)
+    return []
+  }
+}
+
+/**
+ * 获取指定时间范围内的番茄钟记录
+ * @param {number} startTime - 开始时间戳(秒)
+ * @param {number} endTime - 结束时间戳(秒)
+ */
+export function getPomodoroRecordsByDateRange(startTime, endTime) {
+  try {
+    const stmt = db.prepare(`
+      SELECT pr.*, s.focus_item_id, i.name as item_name, i.icon as item_icon, i.color as item_color
+      FROM pomodoro_records pr
+      LEFT JOIN focus_sessions s ON pr.session_id = s.id
+      LEFT JOIN focus_items i ON s.focus_item_id = i.id
+      WHERE pr.start_time >= ? AND pr.start_time < ?
+      ORDER BY pr.start_time DESC
+    `)
+
+    return stmt.all(startTime, endTime)
+  } catch (error) {
+    console.error('Error getting pomodoro records by date range:', error)
+    return []
+  }
+}
+
+/**
+ * 获取指定专注事项的会话列表
+ * @param {number} itemId - 专注事项 ID
+ * @param {number} limit - 限制数量(可选)
+ */
+export function getSessionsByItem(itemId, limit = null) {
+  try {
+    let query = `
+      SELECT s.*, i.name as item_name, i.icon as item_icon, i.color as item_color
+      FROM focus_sessions s
+      LEFT JOIN focus_items i ON s.focus_item_id = i.id
+      WHERE s.focus_item_id = ?
+      ORDER BY s.started_at DESC
+    `
+
+    if (limit) {
+      query += ` LIMIT ${limit}`
+    }
+
+    const stmt = db.prepare(query)
+    return stmt.all(itemId)
+  } catch (error) {
+    console.error('Error getting sessions by item:', error)
+    return []
+  }
+}
+
+/**
+ * 获取指定时间范围内按事项分组的统计
+ * @param {number} startTime - 开始时间戳(秒)
+ * @param {number} endTime - 结束时间戳(秒)
+ */
+export function getStatsByItem(startTime, endTime) {
+  try {
+    const stmt = db.prepare(`
+      SELECT
+        i.id,
+        i.name,
+        i.icon,
+        i.color,
+        COUNT(DISTINCT s.id) as sessionCount,
+        COUNT(DISTINCT pr.id) as pomodoroCount,
+        SUM(CASE WHEN pr.type = 'work' THEN pr.duration ELSE 0 END) as totalFocusTime
+      FROM focus_items i
+      LEFT JOIN focus_sessions s ON i.id = s.focus_item_id AND s.started_at >= ? AND s.started_at < ?
+      LEFT JOIN pomodoro_records pr ON s.id = pr.session_id
+      WHERE i.is_deleted = 0
+      GROUP BY i.id
+      HAVING sessionCount > 0
+      ORDER BY totalFocusTime DESC
+    `)
+
+    return stmt.all(startTime, endTime, startTime, endTime)
+  } catch (error) {
+    console.error('Error getting stats by item:', error)
+    return []
+  }
+}
+
+/**
+ * 获取指定时间范围内每日统计数据(用于趋势图)
+ * @param {number} startTime - 开始时间戳(秒)
+ * @param {number} endTime - 结束时间戳(秒)
+ */
+export function getDailyStats(startTime, endTime) {
+  try {
+    const stmt = db.prepare(`
+      SELECT
+        DATE(start_time, 'unixepoch', 'localtime') as date,
+        COUNT(*) as pomodoroCount,
+        SUM(CASE WHEN type = 'work' THEN duration ELSE 0 END) as focusTime,
+        COUNT(DISTINCT session_id) as sessionCount
+      FROM pomodoro_records
+      WHERE start_time >= ? AND start_time < ?
+      GROUP BY date
+      ORDER BY date ASC
+    `)
+
+    return stmt.all(startTime, endTime)
+  } catch (error) {
+    console.error('Error getting daily stats:', error)
+    return []
+  }
+}
