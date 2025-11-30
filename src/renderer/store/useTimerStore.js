@@ -37,7 +37,7 @@ const useTimerStore = create((set, get) => ({
   remainingTime: 0,      // 剩余时间(秒)
   totalTime: 0,          // 总时间(秒)
   currentItem: null,     // 当前专注事项
-  sessionCount: 0,       // 当前连续完成的番茄钟数量
+  // sessionCount 已移除：请使用 sessionStore.completedPomodoros 代替
   startTimestamp: null,  // 开始时间戳
   pausedTime: 0,         // 暂停时累计的时间(秒)
   intervalId: null,      // 定时器 ID
@@ -227,10 +227,7 @@ const useTimerStore = create((set, get) => ({
       // Phase 2: 通知会话管理工作完成
       const nextBreakType = await sessionStore.onWorkComplete()
 
-      // 更新会话计数
-      const newSessionCount = state.sessionCount + 1
-
-      // 显示通知(工作完成)
+      // 显示通知(工作完成) - 使用 sessionStore 的 completedPomodoros
       await window.api.showNotification({
         title: '工作时段结束! 🎉',
         body: nextBreakType === 'long_break'
@@ -245,10 +242,6 @@ const useTimerStore = create((set, get) => ({
 
       // 自动开始休息倒计时
       await get().start(state.currentItem, breakMode)
-
-      set({
-        sessionCount: newSessionCount
-      })
     } catch (error) {
       console.error('更新统计数据失败:', error)
     }

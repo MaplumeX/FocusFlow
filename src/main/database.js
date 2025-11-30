@@ -21,6 +21,21 @@ import { readFileSync } from 'fs'
 let db = null
 
 /**
+ * 执行事务
+ * @param {Function} callback - 事务中要执行的操作
+ * @returns {*} callback 的返回值
+ * @throws {Error} 如果事务失败
+ */
+export function runInTransaction(callback) {
+  if (!db) {
+    throw new Error('Database not initialized')
+  }
+
+  const transaction = db.transaction(callback)
+  return transaction()
+}
+
+/**
  * 获取数据库路径
  */
 function getDatabaseFilePath() {
@@ -680,5 +695,118 @@ export function getDailyStats(startTime, endTime) {
   } catch (error) {
     console.error('Error getting daily stats:', error)
     return []
+  }
+}
+
+// ============================================
+// 事务性复合操作 (Transaction Compound Operations)
+// ============================================
+
+/**
+ * 在事务中完成番茄钟并更新相关统计
+ * 确保数据一致性：如果任何操作失败，所有更改都会回滚
+ *
+ * @param {Object} params - 参数
+ * @param {number} params.recordId - 番茄钟记录 ID
+ * @param {number} params.focusItemId - 专注事项 ID
+ * @param {number} params.sessionId - 会话 ID
+ * @param {number} params.endTime - 结束时间戳
+ * @param {number} params.duration - 持续时间(秒)
+ * @param {boolean} params.isCompleted - 是否完成
+ * @param {boolean} params.isWork - 是否为工作时段
+ * @returns {boolean} 是否成功
+ */
+export function completePomodoroWithStats(params) {
+  try {
+    return runInTransaction(() => {
+      const {
+        recordId,
+        focusItemId,
+        sessionId,
+        endTime,
+        duration,
+        isCompleted,
+        isWork
+      } = params
+
+      // 1. 更新番茄钟记录
+      const updateRecord = db.prepare(`
+        UPDATE pomodoro_records
+        SET end_time = ?, duration = ?, is_completed = ?
+        WHERE id = ?
+      `)
+      updateRecord.run(endTime, duration, isCompleted ? 1 : 0, recordId)
+
+      // 2. 更新会话番茄钟计数
+      const updateSession = db.prepare(`
+        UPDATE focus_sessions
+        SET
+          total_pomodoros = total_pomodoros + 1,
+          completed_pomodoros = completed_pomodoros + ?
+        WHERE id = ?
+      `)
+      updateSession.run(isCompleted ? 1 : 0, sessionId)
+
+      // 3. 如果是工作时段且完成了，更新专注事项统计
+      if (isWork && isCompleted) {
+        const now = Math.floor(Date.now() / 1000)
+        const updateStats = db.prepare(`
+          UPDATE focus_items
+          SET
+            total_focus_time = total_focus_time + ?,
+            total_sessions = total_sessions + 1,
+            updated_at = ?
+          WHERE id = ? AND is_deleted = 0
+        `)
+        updateStats.run(duration, now, focusItemId)
+      }
+
+      return true
+    })
+  } catch (error) {
+    console.error('Error completing pomodoro with stats:', error)
+    return false
+  }
+}
+
+/**
+ * 在事务中结束会话并完成当前番茄钟
+ *
+ * @param {Object} params - 参数
+ * @param {number} params.sessionId - 会话 ID
+ * @param {number} params.currentPomodoroId - 当前番茄钟记录 ID (可选)
+ * @param {number} params.endTime - 结束时间戳
+ * @param {number} params.duration - 番茄钟持续时间(秒) (可选)
+ * @param {boolean} params.isCompleted - 番茄钟是否完成 (可选)
+ * @returns {boolean} 是否成功
+ */
+export function endSessionWithPomodoro(params) {
+  try {
+    return runInTransaction(() => {
+      const { sessionId, currentPomodoroId, endTime, duration, isCompleted } = params
+
+      // 1. 如果有当前番茄钟，先完成它
+      if (currentPomodoroId) {
+        const updatePomodoro = db.prepare(`
+          UPDATE pomodoro_records
+          SET end_time = ?, duration = ?, is_completed = ?
+          WHERE id = ?
+        `)
+        updatePomodoro.run(endTime, duration || 0, isCompleted ? 1 : 0, currentPomodoroId)
+      }
+
+      // 2. 结束会话
+      const updateSession = db.prepare(`
+        UPDATE focus_sessions
+        SET is_active = 0, ended_at = ?
+        WHERE id = ?
+      `)
+      updateSession.run(endTime, sessionId)
+
+      return true
+    })
+  } catch (error) {
+    console.error('Error ending session with pomodoro:', error)
+    return false
   }
 }

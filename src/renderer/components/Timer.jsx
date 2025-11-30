@@ -12,6 +12,7 @@
  */
 
 import useTimerStore, { TIMER_STATUS, TIMER_MODE } from '../store/useTimerStore'
+import useSessionStore from '../store/useSessionStore'
 import styles from './Timer.module.css'
 
 function Timer() {
@@ -21,9 +22,11 @@ function Timer() {
     remainingTime,
     totalTime,
     currentItem,
-    sessionCount,
     getFormattedTime
   } = useTimerStore()
+
+  // 从 sessionStore 获取已完成的番茄钟数（单一数据源）
+  const { completedPomodoros } = useSessionStore()
 
   // 计算进度百分比
   const getProgress = () => {
@@ -80,9 +83,9 @@ function Timer() {
         </div>
       )}
 
-      {sessionCount > 0 && (
+      {completedPomodoros > 0 && (
         <div className={styles.sessionInfo}>
-          已完成 {sessionCount} 个番茄钟
+          已完成 {completedPomodoros} 个番茄钟
         </div>
       )}
     </div>

@@ -103,6 +103,10 @@ function Home() {
   // Phase 2: 处理休息结束后继续工作
   const handleContinueWork = async () => {
     await continueWork()
+    // 重启工作倒计时
+    if (sessionFocusItem) {
+      await start(sessionFocusItem, TIMER_MODE.WORK)
+    }
   }
 
   // Phase 2: 处理跳过休息/结束会话
@@ -113,6 +117,10 @@ function Home() {
   // Phase 2: 处理跳过休息(休息期间)
   const handleSkipBreak = async () => {
     await skipBreak()
+    // 重启工作倒计时
+    if (sessionFocusItem) {
+      await start(sessionFocusItem, TIMER_MODE.WORK)
+    }
   }
 
   // 渲染控制按钮

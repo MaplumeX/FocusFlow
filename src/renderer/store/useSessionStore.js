@@ -309,12 +309,16 @@ const useSessionStore = create((set, get) => ({
   onWorkComplete: async () => {
     const state = get()
 
+    // 在完成番茄钟之前，先保存当前计数用于判断休息类型
+    // 因为 finishCurrentPomodoro 会增加 completedPomodoros
+    const currentCompletedCount = state.completedPomodoros
+
     // 完成当前工作番茄钟
     await get().finishCurrentPomodoro(true)
 
-    // 判断休息类型
+    // 判断休息类型（使用完成前的计数+1，即刚完成的这个番茄钟）
     const interval = state.sessionConfig.longBreakInterval || 4
-    const shouldLongBreak = state.completedPomodoros % interval === 0
+    const shouldLongBreak = (currentCompletedCount + 1) % interval === 0
 
     if (shouldLongBreak) {
       // 进入长休息

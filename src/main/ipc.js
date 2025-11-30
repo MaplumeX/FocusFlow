@@ -38,7 +38,10 @@ import {
   getPomodoroRecordsByDateRange,
   getSessionsByItem,
   getStatsByItem,
-  getDailyStats
+  getDailyStats,
+  // 事务性复合操作
+  completePomodoroWithStats,
+  endSessionWithPomodoro
 } from './database.js'
 
 /**
@@ -393,6 +396,38 @@ export function registerIpcHandlers() {
       return { success: true, data: stats }
     } catch (error) {
       console.error('Error getting daily stats:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // ==================== 事务性复合操作 ====================
+
+  // 在事务中完成番茄钟并更新统计
+  ipcMain.handle('complete-pomodoro-with-stats', (event, params) => {
+    try {
+      if (!params || !params.recordId || !params.focusItemId || !params.sessionId) {
+        return { success: false, error: 'Invalid parameters' }
+      }
+
+      const success = completePomodoroWithStats(params)
+      return { success }
+    } catch (error) {
+      console.error('Error completing pomodoro with stats:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 在事务中结束会话并完成当前番茄钟
+  ipcMain.handle('end-session-with-pomodoro', (event, params) => {
+    try {
+      if (!params || !params.sessionId || !params.endTime) {
+        return { success: false, error: 'Invalid parameters' }
+      }
+
+      const success = endSessionWithPomodoro(params)
+      return { success }
+    } catch (error) {
+      console.error('Error ending session with pomodoro:', error)
       return { success: false, error: error.message }
     }
   })
