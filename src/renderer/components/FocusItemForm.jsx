@@ -123,7 +123,17 @@ function FocusItemForm({
 
     setSubmitting(true)
     try {
-      await onSubmit?.(formData)
+      // 将蛇形命名法转换为驼峰命名法,以匹配数据库更新函数的期望
+      const submitData = {
+        name: formData.name,
+        icon: formData.icon,
+        color: formData.color,
+        workDuration: formData.work_duration,
+        shortBreak: formData.short_break,
+        longBreak: formData.long_break,
+        longBreakInterval: formData.long_break_interval
+      }
+      await onSubmit?.(submitData)
     } finally {
       setSubmitting(false)
     }
