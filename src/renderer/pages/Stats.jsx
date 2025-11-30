@@ -1,12 +1,32 @@
 /**
- * FocusFlow - 数据统计页面
+ * FocusFlow - 数据统计页面(占位)
+ *
+ * Phase 1 暂不实现
+ *
+ * @author FocusFlow Team
+ * @created 2025-11-30
  */
 
 function Stats() {
   return (
-    <div style={{ padding: '40px' }}>
-      <h1>数据统计</h1>
-      <p>数据统计功能将在 Phase 3 实现</p>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '80vh',
+      padding: '40px'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{ fontSize: '24px', color: '#333', marginBottom: '16px' }}>
+          📊 数据统计
+        </h1>
+        <p style={{ color: '#999', fontSize: '15px' }}>
+          此功能将在 Phase 2 实现
+        </p>
+        <p style={{ color: '#ccc', fontSize: '13px', marginTop: '8px' }}>
+          敬请期待...
+        </p>
+      </div>
     </div>
   )
 }
