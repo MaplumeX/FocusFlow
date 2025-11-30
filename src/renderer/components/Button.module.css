@@ -1,0 +1,126 @@
+/**
+ * Button 组件样式
+ * 支持多种类型和状态
+ */
+
+.button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  user-select: none;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+/* 主要按钮 */
+.primary {
+  background: #1890ff;
+  color: white;
+}
+
+.primary:hover {
+  background: #40a9ff;
+}
+
+.primary:active {
+  background: #096dd9;
+}
+
+/* 默认按钮 */
+.default {
+  background: white;
+  color: #333;
+  border: 1px solid #d9d9d9;
+}
+
+.default:hover {
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+.default:active {
+  color: #096dd9;
+  border-color: #096dd9;
+}
+
+/* 危险按钮 */
+.danger {
+  background: white;
+  color: #ff4d4f;
+  border: 1px solid #ff4d4f;
+}
+
+.danger:hover {
+  background: #fff1f0;
+}
+
+.danger:active {
+  color: #cf1322;
+  border-color: #cf1322;
+}
+
+/* 成功按钮 */
+.success {
+  background: #52c41a;
+  color: white;
+}
+
+.success:hover {
+  background: #73d13d;
+}
+
+.success:active {
+  background: #389e0d;
+}
+
+/* 警告按钮 */
+.warning {
+  background: #faad14;
+  color: white;
+}
+
+.warning:hover {
+  background: #ffc53d;
+}
+
+.warning:active {
+  background: #d48806;
+}
+
+/* 禁用状态 */
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.button:disabled:hover {
+  transform: none;
+}
+
+.button:disabled:active {
+  transform: none;
+}
+
+/* 大小变体 */
+.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.large {
+  padding: 14px 28px;
+  font-size: 16px;
+}
+
+/* 块级按钮 */
+.block {
+  width: 100%;
+  display: block;
+}
