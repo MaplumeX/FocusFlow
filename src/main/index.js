@@ -13,6 +13,8 @@
 
 import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
+import { initDatabase } from './database.js'
+import { registerIpcHandlers } from './ipc.js'
 
 let mainWindow = null
 
@@ -53,6 +55,13 @@ function createWindow() {
 
 // 应用准备就绪
 app.whenReady().then(() => {
+  // 初始化数据库
+  initDatabase()
+
+  // 注册 IPC 处理器
+  registerIpcHandlers()
+
+  // 创建窗口
   createWindow()
 
   // macOS 特殊处理
