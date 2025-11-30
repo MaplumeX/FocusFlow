@@ -1,0 +1,61 @@
+/* FocusFlow - App 根组件样式 */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 60px;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.navTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-right: 40px;
+}
+
+.navLinks {
+  display: flex;
+  gap: 10px;
+}
+
+.navLink,
+.navLinkActive {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.navLink:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.navLinkActive {
+  background: #1890ff;
+  color: #ffffff;
+}
+
+.navLinkActive:hover {
+  background: #40a9ff;
+}
+
+.main {
+  flex: 1;
+  overflow: auto;
+  background: #f5f5f5;
+}
