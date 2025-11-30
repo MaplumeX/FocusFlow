@@ -210,6 +210,72 @@ const useTimerStore = create((set, get) => ({
   },
 
   /**
+   * 处理工作完成
+   */
+  handleWorkFinish: async (state) => {
+    try {
+      const sessionStore = useSessionStore.getState()
+
+      // 更新专注事项统计
+      const focusTime = state.totalTime // 以秒为单位
+      await window.api.updateFocusItemStats(
+        state.currentItem.id,
+        focusTime,
+        1 // 完成次数 +1
+      )
+
+      // Phase 2: 通知会话管理工作完成
+      const nextBreakType = await sessionStore.onWorkComplete()
+
+      // 更新会话计数
+      const newSessionCount = state.sessionCount + 1
+
+      // 显示通知(工作完成)
+      await window.api.showNotification({
+        title: '工作时段结束! 🎉',
+        body: nextBreakType === 'long_break'
+          ? `太棒了!已完成 ${sessionStore.completedPomodoros} 个番茄钟,享受长休息吧!`
+          : `干得好!完成了一个番茄钟,短暂休息一下~`
+      })
+
+      // Phase 2: 自动开始休息
+      const breakMode = nextBreakType === 'long_break'
+        ? TIMER_MODE.LONG_BREAK
+        : TIMER_MODE.SHORT_BREAK
+
+      // 自动开始休息倒计时
+      await get().start(state.currentItem, breakMode)
+
+      set({
+        sessionCount: newSessionCount
+      })
+    } catch (error) {
+      console.error('更新统计数据失败:', error)
+    }
+  },
+
+  /**
+   * 处理休息完成
+   */
+  handleBreakFinish: async () => {
+    const sessionStore = useSessionStore.getState()
+
+    // Phase 2: 休息结束
+    await sessionStore.onBreakComplete()
+
+    await window.api.showNotification({
+      title: '休息结束! ⏰',
+      body: '准备好了吗?开始下一个专注时段!'
+    })
+
+    set({
+      status: TIMER_STATUS.IDLE,
+      remainingTime: 0,
+      intervalId: null
+    })
+  },
+
+  /**
    * 计时完成
    */
   finish: async () => {
@@ -220,65 +286,12 @@ const useTimerStore = create((set, get) => ({
       clearInterval(state.intervalId)
     }
 
-    const sessionStore = useSessionStore.getState()
-
     // Phase 2: 如果是工作模式,处理工作完成
     if (state.mode === TIMER_MODE.WORK && state.currentItem) {
-      try {
-        // 更新专注事项统计
-        const focusTime = state.totalTime // 以秒为单位
-        await window.api.updateFocusItemStats(
-          state.currentItem.id,
-          focusTime,
-          1 // 完成次数 +1
-        )
-
-        // Phase 2: 通知会话管理工作完成
-        const nextBreakType = await sessionStore.onWorkComplete()
-
-        // 更新会话计数
-        const newSessionCount = state.sessionCount + 1
-
-        // 显示通知(工作完成)
-        await window.api.showNotification({
-          title: '工作时段结束! 🎉',
-          body: nextBreakType === 'long_break'
-            ? `太棒了!已完成 ${sessionStore.completedPomodoros} 个番茄钟,享受长休息吧!`
-            : `干得好!完成了一个番茄钟,短暂休息一下~`
-        })
-
-        // Phase 2: 自动开始休息
-        const breakDuration = nextBreakType === 'long_break'
-          ? state.currentItem.long_break
-          : state.currentItem.short_break
-
-        const breakMode = nextBreakType === 'long_break'
-          ? TIMER_MODE.LONG_BREAK
-          : TIMER_MODE.SHORT_BREAK
-
-        // 自动开始休息倒计时
-        await get().start(state.currentItem, breakMode)
-
-        set({
-          sessionCount: newSessionCount
-        })
-      } catch (error) {
-        console.error('更新统计数据失败:', error)
-      }
+      await get().handleWorkFinish(state)
     } else {
       // Phase 2: 休息结束
-      await sessionStore.onBreakComplete()
-
-      await window.api.showNotification({
-        title: '休息结束! ⏰',
-        body: '准备好了吗?开始下一个专注时段!'
-      })
-
-      set({
-        status: TIMER_STATUS.IDLE,
-        remainingTime: 0,
-        intervalId: null
-      })
+      await get().handleBreakFinish()
     }
   },
 

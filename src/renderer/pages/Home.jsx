@@ -27,7 +27,7 @@ function Home() {
   const [showItemSelect, setShowItemSelect] = useState(false)
 
   // Timer Store
-  const { status, currentItem, sessionCount, start, pause, resume, stop } = useTimerStore()
+  const { status, currentItem, start, pause, resume, stop } = useTimerStore()
 
   // Session Store (Phase 2)
   const {
