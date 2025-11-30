@@ -649,7 +649,8 @@ export function getStatsByItem(startTime, endTime) {
       ORDER BY totalFocusTime DESC
     `)
 
-    return stmt.all(startTime, endTime, startTime, endTime)
+    // 仅按会话开始时间范围过滤,多余参数会导致 better-sqlite3 绑定错误
+    return stmt.all(startTime, endTime)
   } catch (error) {
     console.error('Error getting stats by item:', error)
     return []
