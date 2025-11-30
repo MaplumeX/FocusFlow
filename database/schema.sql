@@ -3,10 +3,13 @@
  *
  * 表结构:
  * - focus_items: 专注事项表
+ * - focus_sessions: 专注会话表 (Phase 2)
+ * - pomodoro_records: 番茄钟记录表 (Phase 2)
  * - settings: 设置表
  *
  * @author FocusFlow Team
  * @created 2025-11-30
+ * @updated 2025-11-30 (Phase 2: 添加会话管理表)
  */
 
 -- ============================================
@@ -80,3 +83,80 @@ VALUES
 
   -- 4. 创意工作 (适合需要灵感的创作任务)
   ('创意工作', '💡', '#722ed1', 30, 10, 20, 3, strftime('%s', 'now'), strftime('%s', 'now'));
+
+-- ============================================
+-- 专注会话表 (Focus Sessions) - Phase 2
+-- ============================================
+CREATE TABLE IF NOT EXISTS focus_sessions (
+  -- 主键
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+  -- 关联的专注事项
+  focus_item_id INTEGER NOT NULL,
+
+  -- 配置快照 (记录当时的配置,修改事项配置不影响已有会话)
+  config_work_duration INTEGER NOT NULL,      -- 工作时长快照 (分钟)
+  config_short_break INTEGER NOT NULL,        -- 短休息时长快照 (分钟)
+  config_long_break INTEGER NOT NULL,         -- 长休息时长快照 (分钟)
+  config_long_break_interval INTEGER NOT NULL, -- 长休息间隔快照
+
+  -- 会话状态
+  is_active INTEGER DEFAULT 1,                -- 是否为活动会话 (0: 已结束, 1: 进行中)
+  total_pomodoros INTEGER DEFAULT 0,          -- 本次会话已完成番茄钟数
+  completed_pomodoros INTEGER DEFAULT 0,      -- 完整完成的番茄钟数
+
+  -- 时间戳
+  started_at INTEGER NOT NULL,                -- 会话开始时间 (Unix 时间戳)
+  ended_at INTEGER,                           -- 会话结束时间 (可为空)
+
+  -- 外键约束
+  FOREIGN KEY (focus_item_id) REFERENCES focus_items(id)
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_sessions_focus_item
+  ON focus_sessions(focus_item_id);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_started
+  ON focus_sessions(started_at);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_active
+  ON focus_sessions(is_active);
+
+-- ============================================
+-- 番茄钟记录表 (Pomodoro Records) - Phase 2
+-- ============================================
+CREATE TABLE IF NOT EXISTS pomodoro_records (
+  -- 主键
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+  -- 关联
+  session_id INTEGER NOT NULL,               -- 所属会话 ID
+  focus_item_id INTEGER NOT NULL,            -- 所属事项 ID
+
+  -- 番茄钟信息
+  type TEXT NOT NULL,                        -- 类型: 'work', 'short_break', 'long_break'
+  duration INTEGER NOT NULL,                 -- 实际时长 (秒)
+  is_completed INTEGER DEFAULT 1,            -- 是否完整完成 (0: 未完成, 1: 完成)
+
+  -- 时间戳
+  start_time INTEGER NOT NULL,               -- 开始时间 (Unix 时间戳)
+  end_time INTEGER NOT NULL,                 -- 结束时间 (Unix 时间戳)
+
+  -- 外键约束
+  FOREIGN KEY (session_id) REFERENCES focus_sessions(id),
+  FOREIGN KEY (focus_item_id) REFERENCES focus_items(id)
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_pomodoro_session
+  ON pomodoro_records(session_id);
+
+CREATE INDEX IF NOT EXISTS idx_pomodoro_item
+  ON pomodoro_records(focus_item_id);
+
+CREATE INDEX IF NOT EXISTS idx_pomodoro_type
+  ON pomodoro_records(type);
+
+CREATE INDEX IF NOT EXISTS idx_pomodoro_start_time
+  ON pomodoro_records(start_time);

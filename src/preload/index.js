@@ -4,6 +4,7 @@
  * 功能:
  * - 安全地暴露主进程 API 到渲染进程
  * - 使用 contextBridge 进行隔离
+ * - 会话管理 API (Phase 2)
  *
  * 安全规则(红线要求):
  * - 不暴露 Node.js API
@@ -12,6 +13,7 @@
  *
  * @author FocusFlow Team
  * @created 2025-11-30
+ * @updated 2025-11-30 (Phase 2: 添加会话管理 API)
  */
 
 import { contextBridge, ipcRenderer } from 'electron'
@@ -28,10 +30,28 @@ contextBridge.exposeInMainWorld('api', {
   updateFocusItemStats: (id, focusTime, sessionCount) =>
     ipcRenderer.invoke('update-focus-item-stats', id, focusTime, sessionCount),
 
-  // 设置管理(Phase 1 暂不实现)
+  // 设置管理
   getSettings: () => ipcRenderer.invoke('get-settings'),
   updateSettings: (settings) => ipcRenderer.invoke('update-settings', settings),
 
   // 系统通知
-  showNotification: (options) => ipcRenderer.invoke('show-notification', options)
+  showNotification: (options) => ipcRenderer.invoke('show-notification', options),
+
+  // 会话管理 (Phase 2)
+  createSession: (sessionData) => ipcRenderer.invoke('create-session', sessionData),
+  getSession: (id) => ipcRenderer.invoke('get-session', id),
+  getActiveSession: () => ipcRenderer.invoke('get-active-session'),
+  endSession: (sessionId) => ipcRenderer.invoke('end-session', sessionId),
+  updateSessionPomodoroCount: (sessionId, isCompleted) =>
+    ipcRenderer.invoke('update-session-pomodoro-count', sessionId, isCompleted),
+
+  // 番茄钟记录 (Phase 2)
+  createPomodoroRecord: (recordData) => ipcRenderer.invoke('create-pomodoro-record', recordData),
+  updatePomodoroRecord: (recordId, updates) =>
+    ipcRenderer.invoke('update-pomodoro-record', recordId, updates),
+  getSessionPomodoroRecords: (sessionId) =>
+    ipcRenderer.invoke('get-session-pomodoro-records', sessionId),
+
+  // 今日统计 (Phase 2)
+  getTodayStats: () => ipcRenderer.invoke('get-today-stats')
 })

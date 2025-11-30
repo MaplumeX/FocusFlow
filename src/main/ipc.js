@@ -5,9 +5,11 @@
  * - 注册所有 IPC 处理器
  * - 连接主进程和渲染进程
  * - 处理数据库操作请求
+ * - 会话管理 (Phase 2)
  *
  * @author FocusFlow Team
  * @created 2025-11-30
+ * @updated 2025-11-30 (Phase 2: 添加会话管理)
  */
 
 import { ipcMain } from 'electron'
@@ -20,7 +22,17 @@ import {
   updateFocusItemStats,
   getSettings,
   updateSettings,
-  getDatabasePath
+  getDatabasePath,
+  // Phase 2: 会话管理
+  createSession,
+  getSessionById,
+  getActiveSession,
+  endSession,
+  updateSessionPomodoroCount,
+  createPomodoroRecord,
+  updatePomodoroRecord,
+  getSessionPomodoroRecords,
+  getTodayStats
 } from './database.js'
 
 /**
@@ -173,5 +185,134 @@ export function registerIpcHandlers() {
     }
   })
 
-  console.log('IPC handlers registered successfully')
+  // ==================== 会话管理 (Phase 2) ====================
+
+  // 创建专注会话
+  ipcMain.handle('create-session', (event, sessionData) => {
+    try {
+      if (!sessionData || !sessionData.focusItemId || !sessionData.config) {
+        return { success: false, error: 'Invalid session data' }
+      }
+
+      const session = createSession(sessionData)
+      if (!session) {
+        return { success: false, error: 'Failed to create session' }
+      }
+
+      return { success: true, data: session }
+    } catch (error) {
+      console.error('Error creating session:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 根据 ID 获取会话
+  ipcMain.handle('get-session', (event, id) => {
+    try {
+      const session = getSessionById(id)
+      if (!session) {
+        return { success: false, error: 'Session not found' }
+      }
+      return { success: true, data: session }
+    } catch (error) {
+      console.error('Error getting session:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取活动会话
+  ipcMain.handle('get-active-session', () => {
+    try {
+      const session = getActiveSession()
+      return { success: true, data: session }
+    } catch (error) {
+      console.error('Error getting active session:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 结束会话
+  ipcMain.handle('end-session', (event, sessionId) => {
+    try {
+      const success = endSession(sessionId)
+      if (!success) {
+        return { success: false, error: 'Failed to end session' }
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('Error ending session:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 更新会话番茄钟计数
+  ipcMain.handle('update-session-pomodoro-count', (event, sessionId, isCompleted) => {
+    try {
+      const success = updateSessionPomodoroCount(sessionId, isCompleted)
+      if (!success) {
+        return { success: false, error: 'Failed to update pomodoro count' }
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating session pomodoro count:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 创建番茄钟记录
+  ipcMain.handle('create-pomodoro-record', (event, recordData) => {
+    try {
+      if (!recordData || !recordData.sessionId || !recordData.focusItemId || !recordData.type) {
+        return { success: false, error: 'Invalid pomodoro record data' }
+      }
+
+      const recordId = createPomodoroRecord(recordData)
+      if (!recordId) {
+        return { success: false, error: 'Failed to create pomodoro record' }
+      }
+
+      return { success: true, data: recordId }
+    } catch (error) {
+      console.error('Error creating pomodoro record:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 更新番茄钟记录
+  ipcMain.handle('update-pomodoro-record', (event, recordId, updates) => {
+    try {
+      const success = updatePomodoroRecord(recordId, updates)
+      if (!success) {
+        return { success: false, error: 'Failed to update pomodoro record' }
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating pomodoro record:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取会话的番茄钟记录
+  ipcMain.handle('get-session-pomodoro-records', (event, sessionId) => {
+    try {
+      const records = getSessionPomodoroRecords(sessionId)
+      return { success: true, data: records }
+    } catch (error) {
+      console.error('Error getting session pomodoro records:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 获取今日统计
+  ipcMain.handle('get-today-stats', () => {
+    try {
+      const stats = getTodayStats()
+      return { success: true, data: stats }
+    } catch (error) {
+      console.error('Error getting today stats:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  console.log('IPC handlers registered successfully (with Phase 2 session management)')
 }

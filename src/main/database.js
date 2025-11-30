@@ -4,10 +4,13 @@
  * 功能:
  * - 初始化 SQLite 数据库
  * - 专注事项 CRUD 操作
+ * - 会话管理操作 (Phase 2)
+ * - 番茄钟记录操作 (Phase 2)
  * - 设置管理
  *
  * @author FocusFlow Team
  * @created 2025-11-30
+ * @updated 2025-11-30 (Phase 2: 添加会话管理)
  */
 
 import { app } from 'electron'
@@ -303,5 +306,244 @@ export function closeDatabase() {
   if (db) {
     db.close()
     db = null
+  }
+}
+
+// ============================================
+// 会话管理操作 (Phase 2)
+// ============================================
+
+/**
+ * 创建专注会话
+ * @param {Object} sessionData - 会话数据
+ * @param {number} sessionData.focusItemId - 专注事项 ID
+ * @param {Object} sessionData.config - 配置快照
+ */
+export function createSession(sessionData) {
+  try {
+    const now = Math.floor(Date.now() / 1000)
+
+    const stmt = db.prepare(`
+      INSERT INTO focus_sessions (
+        focus_item_id,
+        config_work_duration,
+        config_short_break,
+        config_long_break,
+        config_long_break_interval,
+        is_active,
+        total_pomodoros,
+        completed_pomodoros,
+        started_at
+      ) VALUES (?, ?, ?, ?, ?, 1, 0, 0, ?)
+    `)
+
+    const result = stmt.run(
+      sessionData.focusItemId,
+      sessionData.config.workDuration,
+      sessionData.config.shortBreak,
+      sessionData.config.longBreak,
+      sessionData.config.longBreakInterval,
+      now
+    )
+
+    return getSessionById(result.lastInsertRowid)
+  } catch (error) {
+    console.error('Error creating session:', error)
+    return null
+  }
+}
+
+/**
+ * 根据 ID 获取会话
+ */
+export function getSessionById(id) {
+  try {
+    const stmt = db.prepare('SELECT * FROM focus_sessions WHERE id = ?')
+    return stmt.get(id)
+  } catch (error) {
+    console.error('Error getting session:', error)
+    return null
+  }
+}
+
+/**
+ * 获取当前活动会话
+ */
+export function getActiveSession() {
+  try {
+    const stmt = db.prepare('SELECT * FROM focus_sessions WHERE is_active = 1 ORDER BY started_at DESC LIMIT 1')
+    return stmt.get()
+  } catch (error) {
+    console.error('Error getting active session:', error)
+    return null
+  }
+}
+
+/**
+ * 结束会话
+ * @param {number} sessionId - 会话 ID
+ */
+export function endSession(sessionId) {
+  try {
+    const now = Math.floor(Date.now() / 1000)
+
+    const stmt = db.prepare(`
+      UPDATE focus_sessions
+      SET is_active = 0, ended_at = ?
+      WHERE id = ?
+    `)
+
+    const result = stmt.run(now, sessionId)
+
+    return result.changes > 0
+  } catch (error) {
+    console.error('Error ending session:', error)
+    return false
+  }
+}
+
+/**
+ * 更新会话番茄钟计数
+ * @param {number} sessionId - 会话 ID
+ * @param {boolean} isCompleted - 是否完整完成
+ */
+export function updateSessionPomodoroCount(sessionId, isCompleted = true) {
+  try {
+    const stmt = db.prepare(`
+      UPDATE focus_sessions
+      SET
+        total_pomodoros = total_pomodoros + 1,
+        completed_pomodoros = completed_pomodoros + ?
+      WHERE id = ?
+    `)
+
+    const result = stmt.run(isCompleted ? 1 : 0, sessionId)
+
+    return result.changes > 0
+  } catch (error) {
+    console.error('Error updating session pomodoro count:', error)
+    return false
+  }
+}
+
+/**
+ * 创建番茄钟记录
+ * @param {Object} recordData - 番茄钟数据
+ */
+export function createPomodoroRecord(recordData) {
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO pomodoro_records (
+        session_id,
+        focus_item_id,
+        type,
+        duration,
+        is_completed,
+        start_time,
+        end_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `)
+
+    const result = stmt.run(
+      recordData.sessionId,
+      recordData.focusItemId,
+      recordData.type,
+      recordData.duration,
+      recordData.isCompleted ? 1 : 0,
+      recordData.startTime,
+      recordData.endTime
+    )
+
+    return result.lastInsertRowid
+  } catch (error) {
+    console.error('Error creating pomodoro record:', error)
+    return null
+  }
+}
+
+/**
+ * 更新番茄钟记录
+ * @param {number} recordId - 记录 ID
+ * @param {Object} updates - 更新数据
+ */
+export function updatePomodoroRecord(recordId, updates) {
+  try {
+    const fields = []
+    const values = []
+
+    if (updates.endTime !== undefined) {
+      fields.push('end_time = ?')
+      values.push(updates.endTime)
+    }
+    if (updates.duration !== undefined) {
+      fields.push('duration = ?')
+      values.push(updates.duration)
+    }
+    if (updates.isCompleted !== undefined) {
+      fields.push('is_completed = ?')
+      values.push(updates.isCompleted ? 1 : 0)
+    }
+
+    if (fields.length === 0) {
+      return true
+    }
+
+    values.push(recordId)
+
+    const stmt = db.prepare(`
+      UPDATE pomodoro_records
+      SET ${fields.join(', ')}
+      WHERE id = ?
+    `)
+
+    const result = stmt.run(...values)
+
+    return result.changes > 0
+  } catch (error) {
+    console.error('Error updating pomodoro record:', error)
+    return false
+  }
+}
+
+/**
+ * 获取会话的所有番茄钟记录
+ * @param {number} sessionId - 会话 ID
+ */
+export function getSessionPomodoroRecords(sessionId) {
+  try {
+    const stmt = db.prepare('SELECT * FROM pomodoro_records WHERE session_id = ? ORDER BY start_time ASC')
+    return stmt.all(sessionId)
+  } catch (error) {
+    console.error('Error getting session pomodoro records:', error)
+    return []
+  }
+}
+
+/**
+ * 获取今日专注统计
+ */
+export function getTodayStats() {
+  try {
+    // 获取今天的开始时间戳 (00:00:00)
+    const todayStart = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000)
+
+    // 统计今日番茄钟记录
+    const stmt = db.prepare(`
+      SELECT
+        COUNT(*) as totalPomodoros,
+        SUM(CASE WHEN type = 'work' THEN duration ELSE 0 END) as totalFocusTime,
+        COUNT(DISTINCT session_id) as totalSessions
+      FROM pomodoro_records
+      WHERE start_time >= ?
+    `)
+
+    return stmt.get(todayStart)
+  } catch (error) {
+    console.error('Error getting today stats:', error)
+    return {
+      totalPomodoros: 0,
+      totalFocusTime: 0,
+      totalSessions: 0
+    }
   }
 }
