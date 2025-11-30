@@ -39,7 +39,8 @@ const useTimerStore = create((set, get) => ({
   currentItem: null,     // 当前专注事项
   // sessionCount 已移除：请使用 sessionStore.completedPomodoros 代替
   startTimestamp: null,  // 开始时间戳
-  pausedTime: 0,         // 暂停时累计的时间(秒)
+  pausedTime: 0,         // 总暂停时长(毫秒) - 优化：直接记录总暂停时长
+  pauseStartTime: null,  // 暂停开始时间戳(毫秒) - 优化：记录暂停起始点
   intervalId: null,      // 定时器 ID
 
   /**
@@ -74,14 +75,21 @@ const useTimerStore = create((set, get) => ({
       await sessionStore.startLongBreak()
     }
 
-    // 计算总时间
+    // 计算总时间 - 使用会话配置快照确保一致性
+    // 从 sessionStore 获取配置快照，如果没有则使用 focusItem 的配置
+    const config = sessionStore.sessionConfig || {
+      workDuration: focusItem.work_duration || 25,
+      shortBreak: focusItem.short_break || 5,
+      longBreak: focusItem.long_break || 15
+    }
+
     let totalSeconds
     if (mode === TIMER_MODE.WORK) {
-      totalSeconds = (focusItem.work_duration || 25) * 60
+      totalSeconds = config.workDuration * 60
     } else if (mode === TIMER_MODE.SHORT_BREAK) {
-      totalSeconds = (focusItem.short_break || 5) * 60
+      totalSeconds = config.shortBreak * 60
     } else {
-      totalSeconds = (focusItem.long_break || 15) * 60
+      totalSeconds = config.longBreak * 60
     }
 
     // 设置开始时间戳
@@ -119,13 +127,10 @@ const useTimerStore = create((set, get) => ({
       clearInterval(state.intervalId)
     }
 
-    // 计算已经过去的时间
-    const elapsed = Math.floor((Date.now() - state.startTimestamp) / 1000)
-    const newPausedTime = state.pausedTime + elapsed
-
+    // 记录暂停开始时间
     set({
       status: TIMER_STATUS.PAUSED,
-      pausedTime: newPausedTime,
+      pauseStartTime: Date.now(),
       intervalId: null
     })
   },
@@ -140,8 +145,9 @@ const useTimerStore = create((set, get) => ({
       return
     }
 
-    // 重新设置开始时间戳
-    const startTimestamp = Date.now()
+    // 计算暂停时长并累加到总暂停时长
+    const pauseDuration = Date.now() - state.pauseStartTime
+    const newPausedTime = state.pausedTime + pauseDuration
 
     // 重启定时器
     const intervalId = setInterval(() => {
@@ -150,7 +156,8 @@ const useTimerStore = create((set, get) => ({
 
     set({
       status: TIMER_STATUS.RUNNING,
-      startTimestamp,
+      pausedTime: newPausedTime,
+      pauseStartTime: null,
       intervalId
     })
   },
@@ -194,12 +201,9 @@ const useTimerStore = create((set, get) => ({
       return
     }
 
-    // 计算实际经过的时间(秒)
-    const elapsed = Math.floor((Date.now() - state.startTimestamp) / 1000)
-    const totalElapsed = state.pausedTime + elapsed
-
-    // 计算剩余时间
-    const remaining = state.totalTime - totalElapsed
+    // 计算实际经过的时间(秒) - 减去暂停时长
+    const elapsed = (Date.now() - state.startTimestamp - state.pausedTime) / 1000
+    const remaining = state.totalTime - Math.floor(elapsed)
 
     if (remaining <= 0) {
       // 计时结束

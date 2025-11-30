@@ -12,6 +12,8 @@
  */
 
 import { create } from 'zustand'
+import useSessionStore from './useSessionStore'
+import useTimerStore, { TIMER_STATUS } from './useTimerStore'
 
 const useFocusStore = create((set, get) => ({
   // 状态
@@ -85,6 +87,13 @@ const useFocusStore = create((set, get) => ({
           set({ selectedItem: result.data })
         }
 
+        // 如果更新的是当前会话使用的事项，同步更新 sessionStore
+        const sessionStore = useSessionStore.getState()
+        if (sessionStore.focusItem?.id === id) {
+          // 调用 sessionStore 的更新方法（需要添加）
+          sessionStore.updateFocusItemInfo(result.data)
+        }
+
         return true
       } else {
         set({ error: result.error, loading: false })
@@ -102,6 +111,28 @@ const useFocusStore = create((set, get) => ({
    * @returns {Promise<boolean>} 是否成功
    */
   deleteItem: async (id) => {
+    // 检查该事项是否正在使用中
+    const sessionStore = useSessionStore.getState()
+    const timerStore = useTimerStore.getState()
+
+    // 如果有活动会话且正在使用该事项
+    if (sessionStore.sessionId && sessionStore.focusItem?.id === id) {
+      set({
+        error: '该专注事项正在使用中，请先停止当前会话再删除',
+        loading: false
+      })
+      return false
+    }
+
+    // 如果计时器正在运行且使用该事项
+    if (timerStore.status !== TIMER_STATUS.IDLE && timerStore.currentItem?.id === id) {
+      set({
+        error: '该专注事项的计时器正在运行中，请先停止计时再删除',
+        loading: false
+      })
+      return false
+    }
+
     set({ loading: true, error: null })
 
     try {

@@ -21,12 +21,11 @@ function Timer() {
     mode,
     remainingTime,
     totalTime,
-    currentItem,
     getFormattedTime
   } = useTimerStore()
 
-  // 从 sessionStore 获取已完成的番茄钟数（单一数据源）
-  const { completedPomodoros } = useSessionStore()
+  // 从 sessionStore 获取专注事项和已完成的番茄钟数（单一数据源）
+  const { focusItem, completedPomodoros } = useSessionStore()
 
   // 计算进度百分比
   const getProgress = () => {
@@ -36,7 +35,7 @@ function Timer() {
 
   // 获取模式显示文本
   const getModeText = () => {
-    if (!currentItem) return '未选择专注事项'
+    if (!focusItem) return '未选择专注事项'
 
     switch (mode) {
       case TIMER_MODE.WORK:
@@ -63,10 +62,10 @@ function Timer() {
 
   return (
     <div className={styles.timer}>
-      {currentItem && (
+      {focusItem && (
         <>
           <div className={styles.mode}>{getModeText()}</div>
-          <div className={styles.itemName}>{currentItem.name} {currentItem.icon}</div>
+          <div className={styles.itemName}>{focusItem.name} {focusItem.icon}</div>
         </>
       )}
 

@@ -375,6 +375,27 @@ const useSessionStore = create((set, get) => ({
   },
 
   /**
+   * 更新专注事项信息 (当外部修改事项时同步)
+   * @param {Object} updatedItem - 更新后的事项数据
+   */
+  updateFocusItemInfo: (updatedItem) => {
+    const state = get()
+    // 只更新显示信息，不更新配置（配置快照不变）
+    if (state.focusItem && state.focusItem.id === updatedItem.id) {
+      set({
+        focusItem: {
+          ...state.focusItem,
+          name: updatedItem.name,
+          icon: updatedItem.icon,
+          color: updatedItem.color,
+          // 不更新配置字段，保持会话快照
+          // work_duration, short_break, long_break, long_break_interval 保持不变
+        }
+      })
+    }
+  },
+
+  /**
    * 刷新今日统计
    */
   refreshTodayStats: async () => {
