@@ -91,12 +91,12 @@ function FocusItemCard({
       {/* 统计信息 */}
       <div className={styles.stats}>
         <div className={styles.statItem}>
-          <span className={styles.statValue}>{formatDuration(item.total_focus_time || 0)}</span>
+          <span className={styles.statValue}>{formatDuration(Math.floor((item.total_focus_time || 0) / 60))}</span>
           <span className={styles.statLabel}>累计时长</span>
         </div>
         <div className={styles.statDivider}></div>
         <div className={styles.statItem}>
-          <span className={styles.statValue}>{item.session_count || 0} 次</span>
+          <span className={styles.statValue}>{item.total_sessions || 0} 次</span>
           <span className={styles.statLabel}>完成次数</span>
         </div>
       </div>

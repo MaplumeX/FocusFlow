@@ -1,0 +1,148 @@
+/**
+ * Items 页面样式
+ * 简洁美观的布局设计
+ */
+
+.container {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 页头 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+/* 事项网格 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+/* 空状态 */
+.emptyState {
+  text-align: center;
+  padding: 100px 20px;
+}
+
+.emptyText {
+  font-size: 18px;
+  color: #666;
+  margin: 0 0 12px 0;
+}
+
+.emptyHint {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+/* 加载状态 */
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.loadingText {
+  font-size: 16px;
+  color: #999;
+}
+
+/* 错误状态 */
+.errorContainer {
+  padding: 40px;
+}
+
+.errorText {
+  color: #ff4d4f;
+  margin: 16px 0 24px 0;
+  font-size: 14px;
+}
+
+/* 删除确认对话框 */
+.deleteConfirm {
+  padding: 8px 0;
+}
+
+.deleteMessage {
+  font-size: 15px;
+  color: #333;
+  margin: 0 0 12px 0;
+  line-height: 1.6;
+}
+
+.deleteMessage strong {
+  color: #1890ff;
+}
+
+.deleteWarning {
+  font-size: 13px;
+  color: #ff4d4f;
+  margin: 0 0 24px 0;
+  padding: 12px;
+  background: #fff1f0;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+.deleteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .header > button {
+    width: 100%;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .emptyState {
+    padding: 60px 20px;
+  }
+}
