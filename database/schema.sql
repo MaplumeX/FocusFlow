@@ -68,21 +68,6 @@ INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES
   ('auto_start_break', 'true', strftime('%s', 'now')),
   ('theme', '"light"', strftime('%s', 'now'));
 
--- 默认专注事项模板 (4 个预设模板)
-INSERT OR IGNORE INTO focus_items
-  (name, icon, color, work_duration, short_break, long_break, long_break_interval, created_at, updated_at)
-VALUES
-  -- 1. 深度工作 (适合需要长时间专注的任务)
-  ('深度工作', '🎯', '#1890ff', 50, 10, 30, 3, strftime('%s', 'now'), strftime('%s', 'now')),
-
-  -- 2. 快速处理 (适合短时间批量处理的任务)
-  ('快速处理', '⚡', '#52c41a', 15, 3, 15, 4, strftime('%s', 'now'), strftime('%s', 'now')),
-
-  -- 3. 标准学习 (经典番茄钟配置)
-  ('标准学习', '📚', '#fa8c16', 25, 5, 15, 4, strftime('%s', 'now'), strftime('%s', 'now')),
-
-  -- 4. 创意工作 (适合需要灵感的创作任务)
-  ('创意工作', '💡', '#722ed1', 30, 10, 20, 3, strftime('%s', 'now'), strftime('%s', 'now'));
 
 -- ============================================
 -- 专注会话表 (Focus Sessions) - Phase 2
