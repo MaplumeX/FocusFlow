@@ -6,16 +6,20 @@
  * - 控制按钮(开始/暂停/停止)
  * - 专注事项选择
  * - 今日统计显示
+ * - 休息结束提示 (Phase 2)
  *
  * @author FocusFlow Team
  * @created 2025-11-30
+ * @updated 2025-11-30 (Phase 2: 添加休息结束提示)
  */
 
 import { useState, useEffect, useMemo } from 'react'
 import Timer from '../components/Timer'
 import Button from '../components/Button'
 import Modal from '../components/Modal'
+import BreakEndModal from '../components/BreakEndModal'
 import useTimerStore, { TIMER_STATUS, TIMER_MODE } from '../store/useTimerStore'
+import useSessionStore, { SESSION_STATE } from '../store/useSessionStore'
 import useFocusStore from '../store/useFocusStore'
 import styles from './Home.module.css'
 
@@ -25,37 +29,36 @@ function Home() {
   // Timer Store
   const { status, currentItem, sessionCount, start, pause, resume, stop } = useTimerStore()
 
+  // Session Store (Phase 2)
+  const {
+    state: sessionState,
+    focusItem: sessionFocusItem,
+    completedPomodoros,
+    todayStats,
+    lastBreakType,
+    continueWork,
+    skipBreak,
+    endSession,
+    refreshTodayStats
+  } = useSessionStore()
+
   // Focus Store
   const { items, loadItems } = useFocusStore()
 
   useEffect(() => {
     loadItems()
-  }, [loadItems])
+    // Phase 2: 刷新今日统计
+    refreshTodayStats()
+  }, [loadItems, refreshTodayStats])
 
-  // 计算今日统计
-  const todayStats = useMemo(() => {
-    // 获取今天的开始时间戳(00:00:00)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStart = Math.floor(today.getTime() / 1000)
-
-    // 统计今日的专注时长和会话数
-    // 注意:这里简化处理,实际应该从数据库查询今日数据
-    // 由于当前没有按日期统计的表,这里用所有累计数据代替
-    let totalTime = 0
-    let totalSessions = 0
-
-    items.forEach(item => {
-      totalTime += item.total_focus_time || 0
-      totalSessions += item.total_sessions || 0
-    })
-
+  // Phase 2: 使用 sessionStore 的今日统计
+  const displayStats = useMemo(() => {
     return {
-      totalTime: Math.floor(totalTime / 60), // 转换为分钟
-      totalSessions,
-      currentSession: sessionCount
+      totalTime: Math.floor((todayStats.totalFocusTime || 0) / 60), // 转换为分钟
+      totalPomodoros: todayStats.totalPomodoros || 0,
+      currentSession: completedPomodoros
     }
-  }, [items, sessionCount])
+  }, [todayStats, completedPomodoros])
 
   // 格式化时长显示
   const formatTime = (minutes) => {
@@ -97,8 +100,27 @@ function Home() {
     setShowItemSelect(false)
   }
 
+  // Phase 2: 处理休息结束后继续工作
+  const handleContinueWork = async () => {
+    await continueWork()
+  }
+
+  // Phase 2: 处理跳过休息/结束会话
+  const handleStopSession = async () => {
+    await endSession()
+  }
+
+  // Phase 2: 处理跳过休息(休息期间)
+  const handleSkipBreak = async () => {
+    await skipBreak()
+  }
+
   // 渲染控制按钮
   const renderControls = () => {
+    // Phase 2: 如果正在休息,显示跳过休息按钮
+    const isBreaking = sessionState === SESSION_STATE.SHORT_BREAK ||
+                       sessionState === SESSION_STATE.LONG_BREAK
+
     if (status === TIMER_STATUS.IDLE) {
       return (
         <Button type="primary" size="large" onClick={handleStart}>
@@ -113,6 +135,11 @@ function Home() {
           <Button type="warning" size="large" onClick={handlePause}>
             暂停
           </Button>
+          {isBreaking && (
+            <Button type="primary" size="large" onClick={handleSkipBreak}>
+              跳过休息
+            </Button>
+          )}
           <Button type="default" size="large" onClick={handleStop}>
             停止
           </Button>
@@ -126,6 +153,11 @@ function Home() {
           <Button type="success" size="large" onClick={handleResume}>
             继续
           </Button>
+          {isBreaking && (
+            <Button type="primary" size="large" onClick={handleSkipBreak}>
+              跳过休息
+            </Button>
+          )}
           <Button type="default" size="large" onClick={handleStop}>
             停止
           </Button>
@@ -149,17 +181,17 @@ function Home() {
           <h3 className={styles.statsTitle}>今日统计</h3>
           <div className={styles.statsGrid}>
             <div className={styles.statItem}>
-              <span className={styles.statValue}>{formatTime(todayStats.totalTime)}</span>
+              <span className={styles.statValue}>{formatTime(displayStats.totalTime)}</span>
               <span className={styles.statLabel}>累计时长</span>
             </div>
             <div className={styles.statDivider}></div>
             <div className={styles.statItem}>
-              <span className={styles.statValue}>{todayStats.totalSessions} 次</span>
+              <span className={styles.statValue}>{displayStats.totalPomodoros} 次</span>
               <span className={styles.statLabel}>完成番茄钟</span>
             </div>
             <div className={styles.statDivider}></div>
             <div className={styles.statItem}>
-              <span className={styles.statValue}>{todayStats.currentSession} 次</span>
+              <span className={styles.statValue}>{displayStats.currentSession} 次</span>
               <span className={styles.statLabel}>当前会话</span>
             </div>
           </div>
@@ -199,6 +231,18 @@ function Home() {
           )}
         </div>
       </Modal>
+
+      {/* Phase 2: 休息结束提示 Modal */}
+      <BreakEndModal
+        isOpen={sessionState === SESSION_STATE.BREAK_END}
+        onContinue={handleContinueWork}
+        onSkip={handleStopSession}
+        sessionStats={{
+          completedPomodoros,
+          focusItemName: sessionFocusItem?.name || '',
+          breakType: lastBreakType || 'short_break'
+        }}
+      />
     </div>
   )
 }

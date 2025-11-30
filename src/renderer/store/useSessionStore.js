@@ -31,6 +31,7 @@ const useSessionStore = create((set, get) => ({
   focusItem: null,           // 当前专注事项
   sessionConfig: null,       // 会话配置快照
   state: SESSION_STATE.IDLE, // 当前状态
+  lastBreakType: null,       // 上一个休息类型 ('short_break' | 'long_break')
 
   // 番茄钟计数
   completedPomodoros: 0,     // 本次会话已完成的番茄钟数
@@ -120,7 +121,8 @@ const useSessionStore = create((set, get) => ({
         state: SESSION_STATE.IDLE,
         completedPomodoros: 0,
         currentPomodoroId: null,
-        currentPomodoroStart: null
+        currentPomodoroStart: null,
+        lastBreakType: null
       })
 
       // 刷新今日统计
@@ -203,7 +205,8 @@ const useSessionStore = create((set, get) => ({
       set({
         state: SESSION_STATE.SHORT_BREAK,
         currentPomodoroId: response.data,
-        currentPomodoroStart: startTime
+        currentPomodoroStart: startTime,
+        lastBreakType: 'short_break'
       })
 
       return true
@@ -243,7 +246,8 @@ const useSessionStore = create((set, get) => ({
       set({
         state: SESSION_STATE.LONG_BREAK,
         currentPomodoroId: response.data,
-        currentPomodoroStart: startTime
+        currentPomodoroStart: startTime,
+        lastBreakType: 'long_break'
       })
 
       return true
