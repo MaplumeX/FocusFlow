@@ -167,6 +167,16 @@ const useTimerStore = create((set, get) => ({
    */
   stop: async () => {
     const state = get()
+    const sessionStore = useSessionStore.getState()
+
+    // 计算停止后要显示的剩余时间(秒) - 使用专注事项工作时长
+    // 优先使用当前专注事项的配置, 其次使用会话配置快照
+    let workTotalSeconds = 0
+    if (state.currentItem?.work_duration) {
+      workTotalSeconds = state.currentItem.work_duration * 60
+    } else if (sessionStore.sessionConfig?.workDuration) {
+      workTotalSeconds = sessionStore.sessionConfig.workDuration * 60
+    }
 
     // 清除定时器
     if (state.intervalId) {
@@ -174,7 +184,6 @@ const useTimerStore = create((set, get) => ({
     }
 
     // Phase 2: 结束会话
-    const sessionStore = useSessionStore.getState()
     if (sessionStore.sessionId) {
       await sessionStore.endSession()
     }
@@ -182,7 +191,9 @@ const useTimerStore = create((set, get) => ({
     set({
       status: TIMER_STATUS.IDLE,
       mode: TIMER_MODE.WORK,
-      remainingTime: 0,
+      // stop 后 remainingTime 显示为专注事项的工作总时长,
+      // totalTime 归零, 表示当前没有在计时
+      remainingTime: workTotalSeconds,
       totalTime: 0,
       startTimestamp: null,
       pausedTime: 0,
