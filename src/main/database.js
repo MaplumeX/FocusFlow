@@ -78,46 +78,11 @@ export function initDatabase() {
       }
     })
 
-    // 运行数据库迁移, 确保旧版本表结构兼容当前代码
-    runMigrations()
-
     console.log('Database initialized successfully')
     return true
   } catch (error) {
     console.error('Failed to initialize database:', error)
     return false
-  }
-}
-
-/**
- * 数据库迁移
- * - 用于在已有数据库上补充新增的字段, 避免运行时列缺失错误
- */
-function runMigrations() {
-  try {
-    // 迁移 focus_sessions: 补充 config_* 快照字段 (旧版本可能没有这些列)
-    try {
-      const columns = db.prepare('PRAGMA table_info(focus_sessions)').all()
-      const columnNames = columns.map(col => col.name)
-
-      const ensureColumn = (name, type, defaultValue = null) => {
-        if (!columnNames.includes(name)) {
-          const defaultClause = defaultValue !== null ? ` DEFAULT ${defaultValue}` : ''
-          const sql = `ALTER TABLE focus_sessions ADD COLUMN ${name} ${type}${defaultClause}`
-          db.exec(sql)
-          console.log(`[Migration] Added column ${name} to focus_sessions`)
-        }
-      }
-
-      ensureColumn('config_work_duration', 'INTEGER')
-      ensureColumn('config_short_break', 'INTEGER')
-      ensureColumn('config_long_break', 'INTEGER')
-      ensureColumn('config_long_break_interval', 'INTEGER')
-    } catch (err) {
-      console.error('Migration error (focus_sessions columns):', err)
-    }
-  } catch (error) {
-    console.error('Database migration failed:', error)
   }
 }
 
