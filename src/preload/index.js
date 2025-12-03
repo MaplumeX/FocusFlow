@@ -26,6 +26,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('api', {
   // 专注事项管理
   getFocusItems: () => ipcRenderer.invoke('get-focus-items'),
+  getFocusItemById: (id) => ipcRenderer.invoke('get-focus-item', id),
   createFocusItem: (item) => ipcRenderer.invoke('create-focus-item', item),
   updateFocusItem: (id, item) => ipcRenderer.invoke('update-focus-item', id, item),
   deleteFocusItem: (id) => ipcRenderer.invoke('delete-focus-item', id),

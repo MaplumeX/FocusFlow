@@ -87,11 +87,16 @@ const useFocusStore = create((set, get) => ({
           set({ selectedItem: result.data })
         }
 
-        // 如果更新的是当前会话使用的事项，同步更新 sessionStore
+        // 如果更新的是当前会话使用的事项, 同步更新 sessionStore
         const sessionStore = useSessionStore.getState()
         if (sessionStore.focusItem?.id === id) {
-          // 调用 sessionStore 的更新方法（需要添加）
           sessionStore.updateFocusItemInfo(result.data)
+        }
+
+        // 如果更新的是当前计时器使用的事项, 同步更新 timerStore
+        const timerStore = useTimerStore.getState()
+        if (timerStore.currentItem?.id === id && typeof timerStore.updateCurrentItemInfo === 'function') {
+          timerStore.updateCurrentItemInfo(result.data)
         }
 
         return true

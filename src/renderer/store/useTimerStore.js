@@ -293,6 +293,39 @@ const useTimerStore = create((set, get) => ({
   },
 
   /**
+   * 更新当前计时器使用的专注事项信息
+   * @param {Object} updatedItem - 更新后的事项数据
+   */
+  updateCurrentItemInfo: (updatedItem) => {
+    const state = get()
+
+    if (!state.currentItem || state.currentItem.id !== updatedItem.id) {
+      return
+    }
+
+    set({
+      currentItem: {
+        ...state.currentItem,
+        name: updatedItem.name,
+        icon: updatedItem.icon,
+        color: updatedItem.color,
+        work_duration: updatedItem.work_duration !== undefined
+          ? updatedItem.work_duration
+          : state.currentItem.work_duration,
+        short_break: updatedItem.short_break !== undefined
+          ? updatedItem.short_break
+          : state.currentItem.short_break,
+        long_break: updatedItem.long_break !== undefined
+          ? updatedItem.long_break
+          : state.currentItem.long_break,
+        long_break_interval: updatedItem.long_break_interval !== undefined
+          ? updatedItem.long_break_interval
+          : state.currentItem.long_break_interval
+      }
+    })
+  },
+
+  /**
    * 重置会话计数
    */
   resetSessionCount: () => {

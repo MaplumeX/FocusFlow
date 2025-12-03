@@ -380,19 +380,55 @@ const useSessionStore = create((set, get) => ({
    */
   updateFocusItemInfo: (updatedItem) => {
     const state = get()
-    // 只更新显示信息，不更新配置（配置快照不变）
-    if (state.focusItem && state.focusItem.id === updatedItem.id) {
-      set({
-        focusItem: {
-          ...state.focusItem,
-          name: updatedItem.name,
-          icon: updatedItem.icon,
-          color: updatedItem.color,
-          // 不更新配置字段，保持会话快照
-          // work_duration, short_break, long_break, long_break_interval 保持不变
-        }
-      })
+
+    if (!state.focusItem || state.focusItem.id !== updatedItem.id) {
+      return
     }
+
+    // 同步更新当前会话关联的专注事项信息和配置快照
+    const updatedFocusItem = {
+      ...state.focusItem,
+      name: updatedItem.name,
+      icon: updatedItem.icon,
+      color: updatedItem.color,
+      work_duration: updatedItem.work_duration !== undefined
+        ? updatedItem.work_duration
+        : state.focusItem.work_duration,
+      short_break: updatedItem.short_break !== undefined
+        ? updatedItem.short_break
+        : state.focusItem.short_break,
+      long_break: updatedItem.long_break !== undefined
+        ? updatedItem.long_break
+        : state.focusItem.long_break,
+      long_break_interval: updatedItem.long_break_interval !== undefined
+        ? updatedItem.long_break_interval
+        : state.focusItem.long_break_interval
+    }
+
+    let updatedSessionConfig = state.sessionConfig
+
+    if (state.sessionConfig) {
+      updatedSessionConfig = {
+        ...state.sessionConfig,
+        workDuration: updatedItem.work_duration !== undefined
+          ? updatedItem.work_duration
+          : state.sessionConfig.workDuration,
+        shortBreak: updatedItem.short_break !== undefined
+          ? updatedItem.short_break
+          : state.sessionConfig.shortBreak,
+        longBreak: updatedItem.long_break !== undefined
+          ? updatedItem.long_break
+          : state.sessionConfig.longBreak,
+        longBreakInterval: updatedItem.long_break_interval !== undefined
+          ? updatedItem.long_break_interval
+          : state.sessionConfig.longBreakInterval
+      }
+    }
+
+    set({
+      focusItem: updatedFocusItem,
+      sessionConfig: updatedSessionConfig
+    })
   },
 
   /**

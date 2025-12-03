@@ -78,11 +78,46 @@ export function initDatabase() {
       }
     })
 
+    // 运行数据库迁移, 确保旧版本表结构兼容当前代码
+    runMigrations()
+
     console.log('Database initialized successfully')
     return true
   } catch (error) {
     console.error('Failed to initialize database:', error)
     return false
+  }
+}
+
+/**
+ * 数据库迁移
+ * - 用于在已有数据库上补充新增的字段, 避免运行时列缺失错误
+ */
+function runMigrations() {
+  try {
+    // 迁移 focus_sessions: 补充 config_* 快照字段 (旧版本可能没有这些列)
+    try {
+      const columns = db.prepare('PRAGMA table_info(focus_sessions)').all()
+      const columnNames = columns.map(col => col.name)
+
+      const ensureColumn = (name, type, defaultValue = null) => {
+        if (!columnNames.includes(name)) {
+          const defaultClause = defaultValue !== null ? ` DEFAULT ${defaultValue}` : ''
+          const sql = `ALTER TABLE focus_sessions ADD COLUMN ${name} ${type}${defaultClause}`
+          db.exec(sql)
+          console.log(`[Migration] Added column ${name} to focus_sessions`)
+        }
+      }
+
+      ensureColumn('config_work_duration', 'INTEGER')
+      ensureColumn('config_short_break', 'INTEGER')
+      ensureColumn('config_long_break', 'INTEGER')
+      ensureColumn('config_long_break_interval', 'INTEGER')
+    } catch (err) {
+      console.error('Migration error (focus_sessions columns):', err)
+    }
+  } catch (error) {
+    console.error('Database migration failed:', error)
   }
 }
 
@@ -155,7 +190,7 @@ export function updateFocusItem(id, updates) {
   try {
     const now = Math.floor(Date.now() / 1000)
 
-    // 构建更新语句
+    // 构建专注事项表更新语句
     const fields = []
     const values = []
 
@@ -203,6 +238,39 @@ export function updateFocusItem(id, updates) {
     `)
 
     stmt.run(...values)
+
+    // 如果有配置相关字段更新, 同步更新当前活动会话的配置快照
+    const sessionFields = []
+    const sessionValues = []
+
+    if (updates.workDuration !== undefined) {
+      sessionFields.push('config_work_duration = ?')
+      sessionValues.push(updates.workDuration)
+    }
+    if (updates.shortBreak !== undefined) {
+      sessionFields.push('config_short_break = ?')
+      sessionValues.push(updates.shortBreak)
+    }
+    if (updates.longBreak !== undefined) {
+      sessionFields.push('config_long_break = ?')
+      sessionValues.push(updates.longBreak)
+    }
+    if (updates.longBreakInterval !== undefined) {
+      sessionFields.push('config_long_break_interval = ?')
+      sessionValues.push(updates.longBreakInterval)
+    }
+
+    if (sessionFields.length > 0) {
+      sessionValues.push(id)
+
+      const updateSessionStmt = db.prepare(`
+        UPDATE focus_sessions
+        SET ${sessionFields.join(', ')}
+        WHERE focus_item_id = ? AND is_active = 1
+      `)
+
+      updateSessionStmt.run(...sessionValues)
+    }
 
     return getFocusItemById(id)
   } catch (error) {
