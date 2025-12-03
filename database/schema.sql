@@ -4,7 +4,7 @@
  * 表结构:
  * - focus_items: 专注事项表
  * - focus_sessions: 专注会话表 (Phase 2)
- * - pomodoro_records: 番茄钟记录表 (Phase 2)
+ * - pomodoro_records: 番茄钟记录表 (仅记录工作时段, 不再区分 type)
  * - settings: 设置表
  *
  * @author FocusFlow Team
@@ -109,9 +109,9 @@ CREATE INDEX IF NOT EXISTS idx_sessions_active
   ON focus_sessions(is_active);
 
 -- ============================================
--- 番茄钟记录表 (Pomodoro Records) - Phase 2
--- ============================================
-CREATE TABLE IF NOT EXISTS pomodoro_records (
+  -- 番茄钟记录表 (Pomodoro Records) - Phase 2
+  -- ============================================
+  CREATE TABLE IF NOT EXISTS pomodoro_records (
   -- 主键
   id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -119,8 +119,7 @@ CREATE TABLE IF NOT EXISTS pomodoro_records (
   session_id INTEGER NOT NULL,               -- 所属会话 ID
   focus_item_id INTEGER NOT NULL,            -- 所属事项 ID
 
-  -- 番茄钟信息
-  type TEXT NOT NULL,                        -- 类型: 'work', 'short_break', 'long_break'
+  -- 番茄钟信息 (仅记录工作番茄钟)
   duration INTEGER NOT NULL,                 -- 实际时长 (秒)
   is_completed INTEGER DEFAULT 1,            -- 是否完整完成 (0: 未完成, 1: 完成)
 
@@ -133,15 +132,12 @@ CREATE TABLE IF NOT EXISTS pomodoro_records (
   FOREIGN KEY (focus_item_id) REFERENCES focus_items(id)
 );
 
--- 创建索引
-CREATE INDEX IF NOT EXISTS idx_pomodoro_session
+  -- 创建索引
+  CREATE INDEX IF NOT EXISTS idx_pomodoro_session
   ON pomodoro_records(session_id);
 
-CREATE INDEX IF NOT EXISTS idx_pomodoro_item
+  CREATE INDEX IF NOT EXISTS idx_pomodoro_item
   ON pomodoro_records(focus_item_id);
-
-CREATE INDEX IF NOT EXISTS idx_pomodoro_type
-  ON pomodoro_records(type);
 
 CREATE INDEX IF NOT EXISTS idx_pomodoro_start_time
   ON pomodoro_records(start_time);

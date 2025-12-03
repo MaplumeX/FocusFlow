@@ -984,7 +984,7 @@ CREATE TABLE IF NOT EXISTS pomodoro_records (
   session_id TEXT NOT NULL,
   focus_item_id TEXT NOT NULL,
 
-  type TEXT NOT NULL CHECK(type IN ('work', 'short_break', 'long_break')),
+  -- 仅记录工作番茄钟, 不再区分 type
   duration INTEGER NOT NULL,
   is_completed INTEGER DEFAULT 0,
 

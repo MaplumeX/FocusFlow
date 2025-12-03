@@ -150,7 +150,6 @@ const useSessionStore = create((set, get) => ({
       const response = await window.api.createPomodoroRecord({
         sessionId: state.sessionId,
         focusItemId: state.focusItem.id,
-        type: 'work',
         duration: 0, // 开始时为 0
         isCompleted: false,
         startTime,
@@ -188,23 +187,10 @@ const useSessionStore = create((set, get) => ({
     try {
       const startTime = Math.floor(Date.now() / 1000)
 
-      const response = await window.api.createPomodoroRecord({
-        sessionId: state.sessionId,
-        focusItemId: state.focusItem.id,
-        type: 'short_break',
-        duration: 0,
-        isCompleted: false,
-        startTime,
-        endTime: startTime
-      })
-
-      if (!response.success) {
-        return false
-      }
-
+      // 休息阶段不再写入数据库记录，仅维护内存状态
       set({
         state: SESSION_STATE.SHORT_BREAK,
-        currentPomodoroId: response.data,
+        currentPomodoroId: null,
         currentPomodoroStart: startTime,
         lastBreakType: 'short_break'
       })
@@ -229,23 +215,10 @@ const useSessionStore = create((set, get) => ({
     try {
       const startTime = Math.floor(Date.now() / 1000)
 
-      const response = await window.api.createPomodoroRecord({
-        sessionId: state.sessionId,
-        focusItemId: state.focusItem.id,
-        type: 'long_break',
-        duration: 0,
-        isCompleted: false,
-        startTime,
-        endTime: startTime
-      })
-
-      if (!response.success) {
-        return false
-      }
-
+      // 休息阶段不再写入数据库记录，仅维护内存状态
       set({
         state: SESSION_STATE.LONG_BREAK,
-        currentPomodoroId: response.data,
+        currentPomodoroId: null,
         currentPomodoroStart: startTime,
         lastBreakType: 'long_break'
       })
@@ -264,7 +237,7 @@ const useSessionStore = create((set, get) => ({
   finishCurrentPomodoro: async (isCompleted = true) => {
     const state = get()
 
-    if (!state.currentPomodoroId) {
+    if (!state.currentPomodoroStart) {
       return
     }
 
@@ -291,16 +264,20 @@ const useSessionStore = create((set, get) => ({
         }
       }
 
-      // 更新番茄钟记录
-      await window.api.updatePomodoroRecord(state.currentPomodoroId, {
-        endTime,
-        duration,
-        isCompleted
-      })
+      // 仅当存在数据库记录时才更新持久化数据
+      if (state.currentPomodoroId) {
+        await window.api.updatePomodoroRecord(state.currentPomodoroId, {
+          endTime,
+          duration,
+          isCompleted
+        })
+      }
 
-      // 如果是工作时段且完成了,更新会话计数
+      // 如果是工作时段且完成了,更新会话计数和本地计数
       if (state.state === SESSION_STATE.WORK && isCompleted) {
-        await window.api.updateSessionPomodoroCount(state.sessionId, true)
+        if (state.currentPomodoroId) {
+          await window.api.updateSessionPomodoroCount(state.sessionId, true)
+        }
 
         set({
           completedPomodoros: state.completedPomodoros + 1,
@@ -308,13 +285,14 @@ const useSessionStore = create((set, get) => ({
           currentPomodoroStart: null
         })
       } else {
+        // 休息阶段或未完成时，仅清理本地计时状态
         set({
           currentPomodoroId: null,
           currentPomodoroStart: null
         })
       }
 
-      // 刷新今日统计
+      // 刷新今日统计(仅依赖工作番茄记录)
       get().refreshTodayStats()
     } catch (error) {
       console.error('完成番茄钟失败:', error)

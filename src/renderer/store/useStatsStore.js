@@ -63,15 +63,13 @@ const useStatsStore = create((set, get) => ({
         window.api.getSessionsByDateRange(start, end)
       ])
 
-      // 处理番茄钟记录统计
+      // 处理番茄钟记录统计(仅存储工作番茄钟)
       if (pomodoroRecords.success) {
-        const workRecords = pomodoroRecords.data.filter(
-          r => r.type === 'work' && r.is_completed
-        )
+        const completedRecords = pomodoroRecords.data.filter(r => r.is_completed)
 
-        const totalPomodoros = workRecords.length
-        const totalFocusTime = workRecords.reduce((sum, r) => sum + (r.duration || 0), 0)
-        const totalSessions = new Set(workRecords.map(r => r.session_id)).size
+        const totalPomodoros = completedRecords.length
+        const totalFocusTime = completedRecords.reduce((sum, r) => sum + (r.duration || 0), 0)
+        const totalSessions = new Set(completedRecords.map(r => r.session_id)).size
         const averageSessionTime = totalSessions > 0
           ? Math.round(totalFocusTime / totalSessions)
           : 0

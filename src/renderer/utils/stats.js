@@ -57,16 +57,15 @@ export function getTimeRange(range) {
  * @returns {Object} 统计摘要
  */
 function calculateStatsSummary(pomodoroRecords) {
-  const workRecords = pomodoroRecords.filter(r => r.type === 'work')
-  const completedWork = workRecords.filter(r => r.is_completed)
+  // 现在仅存储工作番茄钟记录, 不再区分 type
+  const completedWork = pomodoroRecords.filter(r => r.is_completed)
 
   return {
-    totalPomodoros: workRecords.length,
+    totalPomodoros: pomodoroRecords.length,
     completedPomodoros: completedWork.length,
     totalFocusTime: completedWork.reduce((sum, r) => sum + (r.duration || 0), 0),
-    totalBreakTime: pomodoroRecords
-      .filter(r => r.type !== 'work' && r.is_completed)
-      .reduce((sum, r) => sum + (r.duration || 0), 0)
+    // 休息时段不再写入数据库, 这里返回 0
+    totalBreakTime: 0
   }
 }
 
@@ -79,7 +78,7 @@ export function groupByItem(pomodoroRecords) {
   const itemMap = new Map()
 
   pomodoroRecords.forEach(record => {
-    if (record.type !== 'work' || !record.is_completed) return
+    if (!record.is_completed) return
 
     const itemId = record.focus_item_id
     if (!itemId) return
@@ -141,7 +140,7 @@ export function getDailyTrend(pomodoroRecords, days = 7) {
 
   // 填充实际数据
   pomodoroRecords.forEach(record => {
-    if (record.type !== 'work' || !record.is_completed) return
+    if (!record.is_completed) return
 
     const date = new Date(record.start_time * 1000).toISOString().split('T')[0]
 

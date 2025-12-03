@@ -10,7 +10,7 @@
  *
  * @author FocusFlow Team
  * @created 2025-11-30
- * @updated 2025-11-30 (Phase 2: 添加会话管理)
+ * @updated 2025-11-30 (Phase 2: 添加会话管理, 精简番茄钟记录结构仅保留工作时段)
  */
 
 import { app } from 'electron'
@@ -484,18 +484,16 @@ export function createPomodoroRecord(recordData) {
       INSERT INTO pomodoro_records (
         session_id,
         focus_item_id,
-        type,
         duration,
         is_completed,
         start_time,
         end_time
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?)
     `)
 
     const result = stmt.run(
       recordData.sessionId,
       recordData.focusItemId,
-      recordData.type,
       recordData.duration,
       recordData.isCompleted ? 1 : 0,
       recordData.startTime,
@@ -579,10 +577,10 @@ export function getTodayStats() {
     const stmt = db.prepare(`
       SELECT
         COUNT(*) as totalPomodoros,
-        SUM(CASE WHEN type = 'work' THEN duration ELSE 0 END) as totalFocusTime,
+        SUM(duration) as totalFocusTime,
         COUNT(DISTINCT session_id) as totalSessions
       FROM pomodoro_records
-      WHERE start_time >= ? AND type = 'work' AND is_completed = 1
+      WHERE start_time >= ? AND is_completed = 1
     `)
 
     return stmt.get(todayStart)
@@ -687,7 +685,7 @@ export function getStatsByItem(startTime, endTime) {
         i.color,
         COUNT(DISTINCT s.id) as sessionCount,
         COUNT(DISTINCT pr.id) as pomodoroCount,
-        SUM(CASE WHEN pr.type = 'work' THEN pr.duration ELSE 0 END) as totalFocusTime
+        SUM(pr.duration) as totalFocusTime
       FROM focus_items i
       LEFT JOIN focus_sessions s ON i.id = s.focus_item_id AND s.started_at >= ? AND s.started_at < ?
       LEFT JOIN pomodoro_records pr ON s.id = pr.session_id
@@ -716,7 +714,7 @@ export function getDailyStats(startTime, endTime) {
       SELECT
         DATE(start_time, 'unixepoch', 'localtime') as date,
         COUNT(*) as pomodoroCount,
-        SUM(CASE WHEN type = 'work' THEN duration ELSE 0 END) as focusTime,
+        SUM(duration) as focusTime,
         COUNT(DISTINCT session_id) as sessionCount
       FROM pomodoro_records
       WHERE start_time >= ? AND start_time < ?

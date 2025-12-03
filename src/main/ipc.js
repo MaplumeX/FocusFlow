@@ -271,7 +271,7 @@ export function registerIpcHandlers() {
   // 创建番茄钟记录
   ipcMain.handle('create-pomodoro-record', (event, recordData) => {
     try {
-      if (!recordData || !recordData.sessionId || !recordData.focusItemId || !recordData.type) {
+      if (!recordData || !recordData.sessionId || !recordData.focusItemId) {
         return { success: false, error: 'Invalid pomodoro record data' }
       }
 
