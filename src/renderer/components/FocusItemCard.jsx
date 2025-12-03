@@ -7,7 +7,7 @@
  * - 显示配置信息（工作时长、休息时长）
  * - 显示统计信息（累计时长、完成次数）
  * - 支持点击选择
- * - 支持编辑和删除操作
+ * - 支持编辑和归档操作
  *
  * @author FocusFlow Team
  * @created 2025-11-30
@@ -113,9 +113,9 @@ function FocusItemCard({
         <button
           className={`${styles.actionButton} ${styles.deleteButton}`}
           onClick={handleDeleteClick}
-          aria-label="删除"
+          aria-label="归档"
         >
-          删除
+          归档
         </button>
       </div>
     </div>

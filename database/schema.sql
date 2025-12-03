@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS focus_items (
   -- 元数据
   created_at INTEGER NOT NULL,           -- 创建时间 (Unix 时间戳)
   updated_at INTEGER NOT NULL,           -- 更新时间 (Unix 时间戳)
-  is_deleted INTEGER DEFAULT 0           -- 软删除标记 (0: 未删除, 1: 已删除)
+  is_deleted INTEGER DEFAULT 0           -- 归档标记 (0: 活跃, 1: 已归档)
 );
 
 -- 创建索引 (提高查询性能)

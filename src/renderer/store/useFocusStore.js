@@ -111,7 +111,7 @@ const useFocusStore = create((set, get) => ({
   },
 
   /**
-   * 删除专注事项
+   * 删除专注事项(前端语义为归档)
    * @param {number} id - 事项 ID
    * @returns {Promise<boolean>} 是否成功
    */
@@ -123,7 +123,7 @@ const useFocusStore = create((set, get) => ({
     // 如果有活动会话且正在使用该事项
     if (sessionStore.sessionId && sessionStore.focusItem?.id === id) {
       set({
-        error: '该专注事项正在使用中，请先停止当前会话再删除',
+        error: '该专注事项正在使用中，请先停止当前会话再归档',
         loading: false
       })
       return false
@@ -132,7 +132,7 @@ const useFocusStore = create((set, get) => ({
     // 如果计时器正在运行且使用该事项
     if (timerStore.status !== TIMER_STATUS.IDLE && timerStore.currentItem?.id === id) {
       set({
-        error: '该专注事项的计时器正在运行中，请先停止计时再删除',
+        error: '该专注事项的计时器正在运行中，请先停止计时再归档',
         loading: false
       })
       return false
@@ -144,7 +144,7 @@ const useFocusStore = create((set, get) => ({
       const result = await window.api.deleteFocusItem(id)
 
       if (result.success) {
-        // 如果删除的是当前选中项,清空选中
+        // 如果归档的是当前选中项,清空选中
         if (get().selectedItem?.id === id) {
           set({ selectedItem: null })
         }

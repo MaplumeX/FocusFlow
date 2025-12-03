@@ -5,7 +5,7 @@
  * - 显示所有专注事项（使用 FocusItemCard）
  * - 新建事项（使用 FocusItemForm）
  * - 编辑事项（使用 FocusItemForm）
- * - 删除事项（使用 Modal 确认）
+ * - 归档事项（使用 Modal 确认）
  * - 使用 useFocusStore 进行状态管理
  *
  * @author FocusFlow Team
@@ -67,7 +67,7 @@ function Items() {
     }
   }
 
-  // 处理删除事项
+  // 处理归档事项
   const handleDeleteClick = (item) => {
     setDeletingItem(item)
     setShowDeleteModal(true)
@@ -183,26 +183,26 @@ function Items() {
         />
       </Modal>
 
-      {/* 删除确认 Modal */}
+      {/* 归档确认 Modal */}
       <Modal
         visible={showDeleteModal}
-        title="删除确认"
+        title="归档确认"
         onClose={handleDeleteCancel}
         size="small"
       >
         <div className={styles.deleteConfirm}>
           <p className={styles.deleteMessage}>
-            确定要删除专注事项 <strong>{deletingItem?.name}</strong> 吗?
+            确定要归档专注事项 <strong>{deletingItem?.name}</strong> 吗?
           </p>
           <p className={styles.deleteWarning}>
-            此操作不可恢复,所有相关的统计数据也会被删除。
+            事项将从列表中隐藏,但历史统计数据会被保留。
           </p>
           <div className={styles.deleteActions}>
             <Button type="default" onClick={handleDeleteCancel}>
               取消
             </Button>
             <Button type="danger" onClick={handleDeleteConfirm}>
-              确认删除
+              确认归档
             </Button>
           </div>
         </div>
