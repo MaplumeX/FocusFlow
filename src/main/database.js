@@ -582,7 +582,7 @@ export function getTodayStats() {
         SUM(CASE WHEN type = 'work' THEN duration ELSE 0 END) as totalFocusTime,
         COUNT(DISTINCT session_id) as totalSessions
       FROM pomodoro_records
-      WHERE start_time >= ?
+      WHERE start_time >= ? AND type = 'work' AND is_completed = 1
     `)
 
     return stmt.get(todayStart)
