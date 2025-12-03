@@ -30,7 +30,7 @@ function Home() {
   const [pendingItem, setPendingItem] = useState(null)
 
   // Timer Store
-  const { status, currentItem, start, pause, resume, stop } = useTimerStore()
+  const { status, currentItem, start, pause, resume, stop, selectItem } = useTimerStore()
 
   // Session Store (Phase 2)
   const {
@@ -97,9 +97,9 @@ function Home() {
     stop()
   }
 
-  // 选择专注事项
+  // 选择专注事项(从弹窗)
   const handleSelectItem = (item) => {
-    start(item, TIMER_MODE.WORK)
+    selectItem(item)
     setShowItemSelect(false)
   }
 
@@ -113,8 +113,8 @@ function Home() {
       setPendingItem(item)
       setShowSwitchConfirm(true)
     } else {
-      // 空闲状态,直接切换
-      await start(item, TIMER_MODE.WORK)
+      // 空闲状态,仅选择事项,不启动计时
+      selectItem(item)
     }
   }
 
@@ -122,15 +122,11 @@ function Home() {
   const handleConfirmSwitch = async (saveProgress) => {
     if (!pendingItem) return
 
-    if (saveProgress) {
-      // 保存当前进度并切换
-      await stop()
-      await start(pendingItem, TIMER_MODE.WORK)
-    } else {
-      // 直接切换(不保存进度)
-      await stop()
-      await start(pendingItem, TIMER_MODE.WORK)
-    }
+    // 保存当前进度(停止会话)
+    await stop()
+
+    // 选择新事项但不启动
+    selectItem(pendingItem)
 
     setShowSwitchConfirm(false)
     setPendingItem(null)
@@ -311,7 +307,7 @@ function Home() {
       >
         <div className={styles.switchConfirm}>
           <p className={styles.confirmText}>
-            当前计时器正在运行,切换事项将结束当前会话。
+            当前计时器正在运行,切换事项将结束当前会话并保存进度。
           </p>
           <div className={styles.confirmInfo}>
             <div className={styles.infoRow}>
@@ -331,9 +327,9 @@ function Home() {
             <Button
               type="primary"
               size="medium"
-              onClick={() => handleConfirmSwitch(true)}
+              onClick={handleConfirmSwitch}
             >
-              保存进度并切换
+              确认切换
             </Button>
             <Button
               type="default"

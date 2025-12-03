@@ -113,7 +113,7 @@ function FocusItemSidebar({ items, currentItem, onSelectItem, isTimerRunning }) 
             <p className={styles.hint}>
               {isTimerRunning
                 ? '⚠️ 切换将结束当前会话'
-                : '💡 点击事项快速切换'}
+                : '💡 点击事项选择,再点开始'}
             </p>
           </div>
         )}

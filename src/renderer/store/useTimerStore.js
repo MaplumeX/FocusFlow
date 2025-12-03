@@ -352,6 +352,28 @@ const useTimerStore = create((set, get) => ({
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  },
+
+  /**
+   * 仅选择专注事项,不启动计时
+   * @param {Object} focusItem - 专注事项
+   */
+  selectItem: (focusItem) => {
+    const state = get()
+
+    // 如果有正在运行的计时器,不允许切换
+    if (state.status !== TIMER_STATUS.IDLE) {
+      return
+    }
+
+    // 计算剩余时间为工作时长
+    const workTotalSeconds = focusItem.work_duration * 60
+
+    set({
+      currentItem: focusItem,
+      remainingTime: workTotalSeconds,
+      totalTime: 0 // totalTime 为 0 表示未开始计时
+    })
   }
 }))
 

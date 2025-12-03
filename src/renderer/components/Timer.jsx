@@ -21,11 +21,15 @@ function Timer() {
     mode,
     remainingTime,
     totalTime,
+    currentItem,
     getFormattedTime
   } = useTimerStore()
 
   // 从 sessionStore 获取专注事项和已完成的番茄钟数（单一数据源）
-  const { focusItem, completedPomodoros } = useSessionStore()
+  const { focusItem: sessionFocusItem, completedPomodoros } = useSessionStore()
+
+  // 优先使用 sessionFocusItem(会话中), 其次使用 currentItem(仅选择未开始)
+  const displayItem = sessionFocusItem || currentItem
 
   // 计算进度百分比
   const getProgress = () => {
@@ -35,7 +39,12 @@ function Timer() {
 
   // 获取模式显示文本
   const getModeText = () => {
-    if (!focusItem) return '未选择专注事项'
+    if (!displayItem) return '未选择专注事项'
+
+    // 如果是空闲状态且有选中的事项,显示"准备专注"
+    if (status === TIMER_STATUS.IDLE && displayItem) {
+      return '准备专注'
+    }
 
     switch (mode) {
       case TIMER_MODE.WORK:
@@ -62,10 +71,10 @@ function Timer() {
 
   return (
     <div className={styles.timer}>
-      {focusItem && (
+      {displayItem && (
         <>
           <div className={styles.mode}>{getModeText()}</div>
-          <div className={styles.itemName}>{focusItem.name} {focusItem.icon}</div>
+          <div className={styles.itemName}>{displayItem.name} {displayItem.icon}</div>
         </>
       )}
 
