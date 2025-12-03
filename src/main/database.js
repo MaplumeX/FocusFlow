@@ -683,12 +683,12 @@ export function getStatsByItem(startTime, endTime) {
         i.name,
         i.icon,
         i.color,
-        COUNT(DISTINCT s.id) as sessionCount,
+        COUNT(DISTINCT pr.session_id) as sessionCount,
         COUNT(DISTINCT pr.id) as pomodoroCount,
         SUM(pr.duration) as totalFocusTime
       FROM focus_items i
-      LEFT JOIN focus_sessions s ON i.id = s.focus_item_id AND s.started_at >= ? AND s.started_at < ?
-      LEFT JOIN pomodoro_records pr ON s.id = pr.session_id
+      LEFT JOIN focus_sessions s ON i.id = s.focus_item_id
+      LEFT JOIN pomodoro_records pr ON s.id = pr.session_id AND pr.is_completed = 1 AND pr.start_time >= ? AND pr.start_time < ?
       WHERE i.is_deleted = 0
       GROUP BY i.id
       HAVING sessionCount > 0
@@ -717,7 +717,7 @@ export function getDailyStats(startTime, endTime) {
         SUM(duration) as focusTime,
         COUNT(DISTINCT session_id) as sessionCount
       FROM pomodoro_records
-      WHERE start_time >= ? AND start_time < ?
+      WHERE start_time >= ? AND start_time < ? AND is_completed = 1
       GROUP BY date
       ORDER BY date ASC
     `)
