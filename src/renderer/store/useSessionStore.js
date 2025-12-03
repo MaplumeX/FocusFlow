@@ -270,7 +270,26 @@ const useSessionStore = create((set, get) => ({
 
     try {
       const endTime = Math.floor(Date.now() / 1000)
-      const duration = endTime - state.currentPomodoroStart
+      let duration = endTime - state.currentPomodoroStart
+
+      // 对于完整完成的番茄钟,统一以计时器配置的目标时长为准写入 duration,
+      // 避免因为秒级时间戳取整带来的 ±1 秒误差
+      if (isCompleted) {
+        const sessionConfig = state.sessionConfig || {
+          workDuration: state.focusItem?.work_duration,
+          shortBreak: state.focusItem?.short_break,
+          longBreak: state.focusItem?.long_break,
+          longBreakInterval: state.focusItem?.long_break_interval
+        }
+
+        if (state.state === SESSION_STATE.WORK) {
+          duration = (sessionConfig.workDuration || 0) * 60
+        } else if (state.state === SESSION_STATE.SHORT_BREAK) {
+          duration = (sessionConfig.shortBreak || 0) * 60
+        } else if (state.state === SESSION_STATE.LONG_BREAK) {
+          duration = (sessionConfig.longBreak || 0) * 60
+        }
+      }
 
       // 更新番茄钟记录
       await window.api.updatePomodoroRecord(state.currentPomodoroId, {
