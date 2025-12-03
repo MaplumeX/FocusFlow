@@ -4,13 +4,13 @@
  * 功能:
  * - 集成 Timer 组件
  * - 控制按钮(开始/暂停/停止)
- * - 专注事项选择
+ * - 专注事项侧边栏快速切换
  * - 今日统计显示
  * - 休息结束提示 (Phase 2)
  *
  * @author FocusFlow Team
  * @created 2025-11-30
- * @updated 2025-11-30 (Phase 2: 添加休息结束提示)
+ * @updated 2025-12-03 (添加侧边栏快速切换功能)
  */
 
 import { useState, useEffect, useMemo } from 'react'
@@ -18,6 +18,7 @@ import Timer from '../components/Timer'
 import Button from '../components/Button'
 import Modal from '../components/Modal'
 import BreakEndModal from '../components/BreakEndModal'
+import FocusItemSidebar from '../components/FocusItemSidebar'
 import useTimerStore, { TIMER_STATUS, TIMER_MODE } from '../store/useTimerStore'
 import useSessionStore, { SESSION_STATE } from '../store/useSessionStore'
 import useFocusStore from '../store/useFocusStore'
@@ -25,6 +26,8 @@ import styles from './Home.module.css'
 
 function Home() {
   const [showItemSelect, setShowItemSelect] = useState(false)
+  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false)
+  const [pendingItem, setPendingItem] = useState(null)
 
   // Timer Store
   const { status, currentItem, start, pause, resume, stop } = useTimerStore()
@@ -98,6 +101,45 @@ function Home() {
   const handleSelectItem = (item) => {
     start(item, TIMER_MODE.WORK)
     setShowItemSelect(false)
+  }
+
+  // 从侧边栏选择事项
+  const handleSidebarSelectItem = async (item) => {
+    // 判断是否需要确认
+    const isTimerActive = status === TIMER_STATUS.RUNNING || status === TIMER_STATUS.PAUSED
+
+    if (isTimerActive) {
+      // 计时器运行中,需要确认
+      setPendingItem(item)
+      setShowSwitchConfirm(true)
+    } else {
+      // 空闲状态,直接切换
+      await start(item, TIMER_MODE.WORK)
+    }
+  }
+
+  // 确认切换事项
+  const handleConfirmSwitch = async (saveProgress) => {
+    if (!pendingItem) return
+
+    if (saveProgress) {
+      // 保存当前进度并切换
+      await stop()
+      await start(pendingItem, TIMER_MODE.WORK)
+    } else {
+      // 直接切换(不保存进度)
+      await stop()
+      await start(pendingItem, TIMER_MODE.WORK)
+    }
+
+    setShowSwitchConfirm(false)
+    setPendingItem(null)
+  }
+
+  // 取消切换
+  const handleCancelSwitch = () => {
+    setShowSwitchConfirm(false)
+    setPendingItem(null)
   }
 
   // Phase 2: 处理休息结束后继续工作
@@ -176,6 +218,14 @@ function Home() {
 
   return (
     <div className={styles.container}>
+      {/* 专注事项侧边栏 */}
+      <FocusItemSidebar
+        items={items}
+        currentItem={currentItem || sessionFocusItem}
+        onSelectItem={handleSidebarSelectItem}
+        isTimerRunning={status === TIMER_STATUS.RUNNING || status === TIMER_STATUS.PAUSED}
+      />
+
       {/* 主内容区 */}
       <div className={styles.mainContent}>
         <Timer />
@@ -251,6 +301,50 @@ function Home() {
           breakType: lastBreakType || 'short_break'
         }}
       />
+
+      {/* 切换事项确认 Modal */}
+      <Modal
+        visible={showSwitchConfirm}
+        title="切换专注事项"
+        onClose={handleCancelSwitch}
+        size="small"
+      >
+        <div className={styles.switchConfirm}>
+          <p className={styles.confirmText}>
+            当前计时器正在运行,切换事项将结束当前会话。
+          </p>
+          <div className={styles.confirmInfo}>
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>当前事项:</span>
+              <span className={styles.infoValue}>
+                {currentItem?.icon} {currentItem?.name}
+              </span>
+            </div>
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>切换至:</span>
+              <span className={styles.infoValue}>
+                {pendingItem?.icon} {pendingItem?.name}
+              </span>
+            </div>
+          </div>
+          <div className={styles.confirmActions}>
+            <Button
+              type="primary"
+              size="medium"
+              onClick={() => handleConfirmSwitch(true)}
+            >
+              保存进度并切换
+            </Button>
+            <Button
+              type="default"
+              size="medium"
+              onClick={handleCancelSwitch}
+            >
+              取消
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 /**
  * Home 页面样式
- * 居中布局 + 今日统计卡片
+ * 侧边栏 + 居中布局 + 今日统计卡片
  */
 
 .container {
@@ -9,8 +9,9 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 40px;
+  padding: 40px 40px 40px 100px; /* 左侧留出侧边栏空间 */
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  transition: padding-left 0.3s ease;
 }
 
 /* 主内容区 */
@@ -135,10 +136,63 @@
   color: #999;
 }
 
+/* 切换确认对话框样式 */
+.switchConfirm {
+  padding: 8px 0;
+}
+
+.confirmText {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.confirmInfo {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.infoRow:not(:last-child) {
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.infoLabel {
+  font-size: 13px;
+  color: #999;
+  font-weight: 500;
+}
+
+.infoValue {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirmActions button {
+  min-width: 140px;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .container {
-    padding: 24px 16px;
+    padding: 24px 16px 24px 66px; /* 移动端调整侧边栏空间 */
   }
 
   .statsCard {
