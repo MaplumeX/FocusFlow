@@ -689,7 +689,6 @@ export function getStatsByItem(startTime, endTime) {
       FROM focus_items i
       LEFT JOIN focus_sessions s ON i.id = s.focus_item_id
       LEFT JOIN pomodoro_records pr ON s.id = pr.session_id AND pr.is_completed = 1 AND pr.start_time >= ? AND pr.start_time < ?
-      WHERE i.is_deleted = 0
       GROUP BY i.id
       HAVING sessionCount > 0
       ORDER BY totalFocusTime DESC
