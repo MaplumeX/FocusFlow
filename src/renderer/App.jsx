@@ -15,13 +15,50 @@ import Home from './pages/Home'
 import Items from './pages/Items'
 import Stats from './pages/Stats'
 import Settings from './pages/Settings'
+import SyncStatus from './components/SyncStatus'
 import useSessionStore from './store/useSessionStore'
 import useFocusStore from './store/useFocusStore'
+import useAuthStore from './store/useAuthStore'
+import useSyncStore from './store/useSyncStore'
+import { isSupabaseConfigured } from './utils/supabase'
 import styles from './App.module.css'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home')
   const [isRestoringSession, setIsRestoringSession] = useState(true)
+
+  const { initAuth, setupAuthListener, isAuthenticated, user } = useAuthStore()
+  const { initSync, sync } = useSyncStore()
+
+  // 应用启动时初始化认证和同步
+  useEffect(() => {
+    // 初始化认证
+    initAuth()
+
+    // 设置认证状态监听
+    const unsubscribe = setupAuthListener()
+
+    // 清理函数
+    return () => {
+      unsubscribe && unsubscribe()
+    }
+  }, [initAuth, setupAuthListener])
+
+  // 用户登录后初始化同步
+  useEffect(() => {
+    if (isAuthenticated && user && isSupabaseConfigured()) {
+      // 初始化同步 (启动定时器和网络监听)
+      const cleanup = initSync()
+
+      // 执行首次同步
+      sync(user, false)
+
+      // 清理函数
+      return () => {
+        cleanup && cleanup()
+      }
+    }
+  }, [isAuthenticated, user, initSync, sync])
 
   // 应用启动时恢复会话
   useEffect(() => {
@@ -107,6 +144,12 @@ function App() {
             设置
           </button>
         </div>
+        {/* 同步状态指示器 */}
+        {isSupabaseConfigured() && isAuthenticated && (
+          <div className={styles.syncStatusContainer}>
+            <SyncStatus />
+          </div>
+        )}
       </nav>
 
       {/* 页面内容 */}

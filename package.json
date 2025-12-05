@@ -12,6 +12,7 @@
     "start": "electron-vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.86.0",
     "better-sqlite3": "9.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

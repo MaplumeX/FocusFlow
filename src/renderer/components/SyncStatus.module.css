@@ -1,0 +1,92 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f7fafc;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statusText {
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.timeText {
+  font-size: 11px;
+  color: #a0aec0;
+}
+
+/* 状态样式 */
+.idle {
+  background: #f7fafc;
+}
+
+.syncing {
+  background: #ebf8ff;
+  border: 1px solid #90cdf4;
+}
+
+.syncing .statusText {
+  color: #2c5282;
+}
+
+.syncing .icon {
+  animation: spin 2s linear infinite;
+}
+
+.success {
+  background: #f0fff4;
+  border: 1px solid #9ae6b4;
+}
+
+.success .statusText {
+  color: #2f855a;
+}
+
+.error {
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+}
+
+.error .statusText {
+  color: #c53030;
+}
+
+.offline {
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
+}
+
+.offline .statusText {
+  color: #c05621;
+}
+
+/* 旋转动画 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 悬停效果 */
+.container:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
